@@ -1,0 +1,45 @@
+# Entornos virtuales
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Variables de entorno (NUNCA versionar contraseñas)
+.env
+!.env.example
+
+# Bases de datos SQLite
+*.sqlite3
+db.sqlite3
+
+# Logs
+*.log
+logs/
+
+# IDE / Editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Django
+techgear_web/staticfiles/
+techgear_web/media/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Builds
+*.egg-info/
+dist/
+build/
