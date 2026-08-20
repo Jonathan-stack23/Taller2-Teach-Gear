@@ -1,4 +1,10 @@
 import os
+import sys
+
+# Asegura que Python encuentre database.py y schemas.py
+# sin importar desde que directorio se ejecute uvicorn (necesario en Render)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
 from datetime import datetime
 from typing import List, Optional
 from bson import ObjectId
