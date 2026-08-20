@@ -5,12 +5,11 @@ services:
   - type: web
     name: techgear-api
     runtime: python
-    rootDir: techgear_api
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: cd techgear_api && uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: MONGODB_URL
-        sync: false          # Se configura manualmente en el dashboard de Render (es un secreto)
+        sync: false
       - key: PYTHONIOENCODING
         value: utf-8
 
@@ -20,17 +19,16 @@ services:
   - type: web
     name: techgear-web
     runtime: python
-    rootDir: techgear_web
     buildCommand: pip install -r requirements.txt
-    startCommand: python manage.py runserver 0.0.0.0:$PORT
+    startCommand: cd techgear_web && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: API_BASE_URL
-        sync: false          # Poner aqui la URL publica del servicio techgear-api en Render
+        sync: false
       - key: SECRET_KEY
-        sync: false          # Clave secreta de Django (generarla con: python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())")
+        sync: false
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        sync: false          # Poner el dominio de Render: ej. techgear-web.onrender.com
+        sync: false
       - key: PYTHONIOENCODING
         value: utf-8
