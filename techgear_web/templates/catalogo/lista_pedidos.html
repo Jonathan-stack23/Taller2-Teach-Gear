@@ -42,7 +42,7 @@
                     <div class="card-header bg-transparent border-bottom py-3 px-4 d-flex justify-content-between align-items-center">
                         <div>
                             <small class="text-muted d-block mb-1">Pedido</small>
-                            <code class="fw-semibold text-dark">#{{ pedido._id }}</code>
+                            <code class="fw-semibold text-dark">#{{ pedido.id }}</code>
                         </div>
                         {% with estado=pedido.estado %}
                             {% if estado == 'pendiente' %}
@@ -86,7 +86,7 @@
                             <div class="d-flex flex-wrap gap-1">
                                 {% for item in pedido.items %}
                                     <span class="badge bg-secondary bg-opacity-10 text-secondary">
-                                        {{ item.cantidad }}× #{{ item.producto_id|slice:":8" }}
+                                        {{ item.cantidad }}× #{{ item.productoid|slice:":8" }}
                                     </span>
                                 {% endfor %}
                             </div>
@@ -100,7 +100,7 @@
                                 <small class="text-muted d-block">Fecha</small>
                                 <div class="text-dark small">{{ pedido.fecha_creacion|slice:":10" }}</div>
                             </div>
-                            <a href="{% url 'catalogo:detalle_pedido' pedido._id %}" class="btn btn-outline-primary">
+                            <a href="{% url 'catalogo:detalle_pedido' pedido.id %}" class="btn btn-outline-primary">
                                 <i class="bi bi-eye me-1"></i>Ver
                             </a>
                         </div>

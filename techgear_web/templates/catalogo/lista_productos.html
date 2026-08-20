@@ -34,7 +34,7 @@
         {% for producto in productos %}
             <div class="col-xl-3 col-lg-4 col-md-6">
                 <div class="card h-100 shadow-sm border-0 hover-shadow">
-                    <a href="{% url 'catalogo:detalle_producto' producto._id %}" class="text-decoration-none text-dark">
+                    <a href="{% url 'catalogo:detalle_producto' producto.id %}" class="text-decoration-none text-dark">
                         <div class="bg-primary bg-opacity-10 rounded-top p-4 text-center" style="min-height: 180px; display: flex; align-items: center; justify-content: center;">
                             {% if producto.imagen_url %}
                                 <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-fluid rounded" style="max-height: 160px; object-fit: contain;">
@@ -66,7 +66,7 @@
                         </div>
                     </div>
                     <div class="card-footer bg-transparent border-top-0 pt-0 pb-3 d-flex gap-2">
-                        <a href="{% url 'catalogo:detalle_producto' producto._id %}" class="btn btn-primary w-100">
+                        <a href="{% url 'catalogo:detalle_producto' producto.id %}" class="btn btn-primary w-100">
                             <i class="bi bi-eye me-1"></i>Ver Producto
                         </a>
                     </div>

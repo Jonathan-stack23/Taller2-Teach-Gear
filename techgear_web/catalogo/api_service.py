@@ -1,23 +1,120 @@
 import json
 import socket
-import urllib.request
-import urllib.parse
-import urllib.error
 from django.conf import settings
+
+try:
+    import requests
+    USING_REQUESTS = True
+except ImportError:
+    USING_REQUESTS = False
+    import urllib.request
+    import urllib.parse
+    import urllib.error
 
 
 REQUEST_TIMEOUT = 10
 
 
+def _convert_underscore_ids(obj):
+    if isinstance(obj, dict):
+        nuevo = {}
+        for k, v in obj.items():
+            if k == "_id":
+                nuevo["id"] = _convert_underscore_ids(v)
+            else:
+                nuevo[k] = _convert_underscore_ids(v)
+        return nuevo
+    elif isinstance(obj, list):
+        return [_convert_underscore_ids(x) for x in obj]
+    else:
+        return obj
+
+
 def _request_json(method: str, url: str, data: dict = None, params: dict = None):
+    if USING_REQUESTS:
+        result, err = _request_json_requests(method, url, data, params)
+    else:
+        result, err = _request_json_urllib(method, url, data, params)
+    if result is not None:
+        result = _convert_underscore_ids(result)
+    return result, err
+
+
+def _filtered_params(params):
+    if not params:
+        return {}
+    filtered = {}
+    for k, v in params.items():
+        if v is not None:
+            if isinstance(v, bool):
+                filtered[k] = "true" if v else "false"
+            else:
+                filtered[k] = v
+    return filtered
+
+
+def _build_url_with_params(url, params):
+    filtered = _filtered_params(params)
+    if not filtered:
+        return url
     try:
-        if params:
-            query_string = urllib.parse.urlencode(
-                {k: ("true" if v is True else "false" if v is False else v)
-                 for k, v in params.items() if v is not None}
-            )
-            sep = "&" if "?" in url else "?"
-            url = f"{url}{sep}{query_string}"
+        import urllib.parse
+        query_string = urllib.parse.urlencode(filtered)
+    except Exception:
+        parts = []
+        for k, v in filtered.items():
+            parts.append(f"{k}={v}")
+        query_string = "&".join(parts)
+    sep = "&" if "?" in url else "?"
+    return f"{url}{sep}{query_string}"
+
+
+def _request_json_requests(method: str, url: str, data: dict = None, params: dict = None):
+    try:
+        headers = {
+            "User-Agent": "TechGearDjango/1.0",
+            "Accept": "application/json",
+        }
+
+        kwargs = {
+            "params": _filtered_params(params) or None,
+            "headers": headers,
+            "timeout": REQUEST_TIMEOUT,
+        }
+        if data is not None:
+            kwargs["json"] = data
+
+        response = requests.request(method, url, **kwargs)
+
+        try:
+            response.raise_for_status()
+        except requests.HTTPError:
+            try:
+                detail_json = response.json()
+                detail = detail_json.get("detail", response.text) if isinstance(detail_json, dict) else response.text
+            except ValueError:
+                detail = response.text
+            return None, f"Error {response.status_code}: {detail}"
+
+        if not response.content:
+            return {}, None
+
+        try:
+            return response.json(), None
+        except ValueError as e:
+            return None, f"Error al decodificar respuesta JSON: {str(e)}"
+
+    except requests.ConnectionError as e:
+        return None, f"Error de conexión: {str(e)}"
+    except requests.Timeout:
+        return None, "Tiempo de espera agotado al conectar con la API"
+    except requests.RequestException as e:
+        return None, f"Error inesperado: {str(e)}"
+
+
+def _request_json_urllib(method: str, url: str, data: dict = None, params: dict = None):
+    try:
+        url = _build_url_with_params(url, params)
 
         body_bytes = None
         headers = {

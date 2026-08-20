@@ -107,8 +107,9 @@ def crear_pedido(request: HttpRequest) -> HttpResponse:
             messages.error(request, f"No se pudo crear el pedido: {error}")
         else:
             request.session['carrito'] = []
-            messages.success(request, f"¡Pedido creado exitosamente! Número: {resultado['_id']}")
-            return redirect('catalogo:detalle_pedido', pedido_id=resultado['_id'])
+            pedido_id_nuevo = resultado.get('id') or resultado.get('_id')
+            messages.success(request, f"¡Pedido creado exitosamente! Número: {pedido_id_nuevo}")
+            return redirect('catalogo:detalle_pedido', pedido_id=pedido_id_nuevo)
 
     return render(request, 'catalogo/crear_pedido.html', {
         'carrito': carrito,
