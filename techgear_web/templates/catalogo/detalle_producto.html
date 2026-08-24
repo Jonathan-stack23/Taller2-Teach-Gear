@@ -95,7 +95,7 @@
                 </h5>
 
                 {% if producto.stock > 0 and producto.activo %}
-                    <form method="post" class="mt-3">
+                    <form method="post" class="mt-3" id="form-agregar-carrito" data-precio="{{ producto.precio }}" data-stock="{{ producto.stock }}">
                         {% csrf_token %}
                         <div class="row g-3 align-items-end mb-4">
                             <div class="col-sm-6">
@@ -148,23 +148,29 @@
 </div>
 
 <script>
-    const precioUnitario = {{ producto.precio }};
-    const maxStock = {{ producto.stock }};
+    const formAgregar = document.getElementById('form-agregar-carrito');
+    const precioUnitario = formAgregar ? parseFloat(formAgregar.dataset.precio || '0') : 0;
+    const maxStock = formAgregar ? parseInt(formAgregar.dataset.stock || '0', 10) : 0;
 
     function actualizarSubtotal() {
         const input = document.getElementById('cantidad');
-        let cantidad = parseInt(input.value) || 1;
+        if (!input) return;
+        let cantidad = parseInt(input.value, 10) || 1;
         if (cantidad < 1) cantidad = 1;
-        if (cantidad > maxStock) cantidad = maxStock;
+        if (maxStock > 0 && cantidad > maxStock) cantidad = maxStock;
         input.value = cantidad;
         const subtotal = (precioUnitario * cantidad).toFixed(2);
-        document.getElementById('subtotal-display').textContent = '$' + subtotal;
+        const subtotalEl = document.getElementById('subtotal-display');
+        if (subtotalEl) {
+            subtotalEl.textContent = '$' + subtotal;
+        }
     }
 
     function sumarCantidad() {
         const input = document.getElementById('cantidad');
-        let valor = parseInt(input.value) || 0;
-        if (valor < maxStock) {
+        if (!input) return;
+        let valor = parseInt(input.value, 10) || 0;
+        if (maxStock === 0 || valor < maxStock) {
             input.value = valor + 1;
             actualizarSubtotal();
         }
@@ -172,7 +178,8 @@
 
     function restarCantidad() {
         const input = document.getElementById('cantidad');
-        let valor = parseInt(input.value) || 0;
+        if (!input) return;
+        let valor = parseInt(input.value, 10) || 0;
         if (valor > 1) {
             input.value = valor - 1;
             actualizarSubtotal();
