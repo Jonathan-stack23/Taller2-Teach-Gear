@@ -3,138 +3,176 @@
 {% block title %}Finalizar Compra - TechGear{% endblock %}
 
 {% block content %}
+<!-- Breadcrumb -->
 <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:home' %}" class="text-decoration-none">Inicio</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none">Catálogo</a></li>
-        <li class="breadcrumb-item active" aria-current="page">Finalizar Compra</li>
+    <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted"><i class="bi bi-house me-1"></i>Inicio</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none text-muted">Catálogo</a></li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Finalizar Compra</li>
     </ol>
 </nav>
 
-<h1 class="fw-bold text-dark mb-4"><i class="bi bi-credit-card text-primary me-2"></i>Finalizar Compra</h1>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <h1 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+        <i class="bi bi-credit-card-2-front-fill text-primary"></i>Finalizar Compra
+    </h1>
+    {% if carrito %}
+        <a href="{% url 'catalogo:vaciar_carrito' %}" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="return confirm('¿Estás seguro de que deseas vaciar tu carrito?');">
+            <i class="bi bi-trash3 me-1"></i>Vaciar Carrito
+        </a>
+    {% endif %}
+</div>
 
-<div class="row g-5">
-    <div class="col-lg-8">
-        <div class="card border-0 shadow-sm bg-white rounded-4 mb-4">
-            <div class="card-body p-4">
-                <h5 class="fw-bold mb-4 text-dark">
-                    <i class="bi bi-person me-2 text-primary"></i>Datos del Cliente y Envío
+<div class="row g-4 g-lg-5">
+    {% if carrito %}
+        <!-- Formulario de Datos del Cliente -->
+        <div class="col-lg-7">
+            <div class="card border-0 shadow-sm bg-white rounded-4 p-4 p-md-5">
+                <h5 class="fw-bold mb-4 text-dark d-flex align-items-center gap-2">
+                    <i class="bi bi-person-circle text-primary"></i>1. Datos de Contacto y Envío
                 </h5>
                 <form method="post" id="pedido-form">
                     {% csrf_token %}
                     <div class="row g-3 mb-4">
-                        <div class="col-md-8">
-                            <label for="cliente_nombre" class="form-label fw-medium">Nombre completo *</label>
+                        <div class="col-md-7">
+                            <label for="cliente_nombre" class="form-label fw-semibold text-dark small">Nombre Completo *</label>
                             <input type="text" id="cliente_nombre" name="cliente_nombre"
-                                   class="form-control form-control-lg" required minlength="2"
-                                   placeholder="Ej: Juan Pérez González">
+                                   class="form-control form-control-lg rounded-3" required minlength="2"
+                                   placeholder="Ej: Carlos Andrés Rodríguez">
                         </div>
-                        <div class="col-md-4">
-                            <label for="cliente_telefono" class="form-label fw-medium">Teléfono</label>
+                        <div class="col-md-5">
+                            <label for="cliente_telefono" class="form-label fw-semibold text-dark small">Teléfono Móvil</label>
                             <input type="tel" id="cliente_telefono" name="cliente_telefono"
-                                   class="form-control form-control-lg"
-                                   placeholder="Ej: 3001234567">
+                                   class="form-control form-control-lg rounded-3"
+                                   placeholder="Ej: 3101234567">
                         </div>
                         <div class="col-12">
-                            <label for="cliente_email" class="form-label fw-medium">Correo electrónico *</label>
+                            <label for="cliente_email" class="form-label fw-semibold text-dark small">Correo Electrónico *</label>
                             <input type="email" id="cliente_email" name="cliente_email"
-                                   class="form-control form-control-lg" required
-                                   placeholder="tu.correo@ejemplo.com">
-                            <div class="form-text">Usaremos este correo para enviarte la confirmación del pedido.</div>
+                                   class="form-control form-control-lg rounded-3" required
+                                   placeholder="tu.correo@dominio.com">
+                            <div class="form-text small text-muted">Te enviaremos el número de guía y confirmación por este medio.</div>
                         </div>
                         <div class="col-12">
-                            <label for="direccion_envio" class="form-label fw-medium">Dirección de envío *</label>
+                            <label for="direccion_envio" class="form-label fw-semibold text-dark small">Dirección Completa de Envío *</label>
                             <textarea id="direccion_envio" name="direccion_envio"
-                                      class="form-control form-control-lg" required rows="3"
+                                      class="form-control form-control-lg rounded-3" required rows="3"
                                       minlength="10"
-                                      placeholder="Calle, número, barrio, ciudad, departamento..."></textarea>
+                                      placeholder="Calle / Carrera, Número, Apartamento/Torre, Barrio, Ciudad, Departamento"></textarea>
                         </div>
                         <div class="col-12">
-                            <label for="notas" class="form-label fw-medium">Notas adicionales</label>
+                            <label for="notas" class="form-label fw-semibold text-dark small">Notas de Entrega (Opcional)</label>
                             <textarea id="notas" name="notas"
-                                      class="form-control" rows="2"
-                                      placeholder="Ej: Entregar en horas de la tarde, llamar antes de llegar..."></textarea>
+                                      class="form-control rounded-3" rows="2"
+                                      placeholder="Ej: Dejar en portería, timbrar al apto 402..."></textarea>
                         </div>
+                    </div>
+
+                    <div class="d-none d-lg-block">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm" id="submit-btn-lg">
+                            <i class="bi bi-lock-fill me-2"></i>Confirmar y Enviar Pedido
+                        </button>
                     </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-lg-4">
-        <div class="card border-0 shadow-sm bg-white rounded-4 sticky-top" style="top: 1rem;">
-            <div class="card-header bg-transparent border-bottom py-4 px-4">
-                <h5 class="fw-bold mb-0 text-dark">
-                    <i class="bi bi-bag-check me-2 text-primary"></i>Resumen del Pedido
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                {% if carrito %}
-                    <div class="mb-4" style="max-height: 320px; overflow-y: auto;">
+        <!-- Resumen del Carrito -->
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm bg-white rounded-4 sticky-top overflow-hidden" style="top: 6rem;">
+                <div class="card-header bg-light border-0 py-3 px-4 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-cart-check-fill text-primary me-2"></i>Resumen de Compra
+                    </h5>
+                    <span class="badge bg-primary rounded-pill">{{ carrito|length }} item{{ carrito|length|pluralize }}</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="cart-items-list mb-3" style="max-height: 300px; overflow-y: auto;">
                         {% for item in carrito %}
-                            <div class="d-flex gap-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
-                                <div class="bg-primary bg-opacity-10 rounded p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 56px; height: 56px;">
+                            <div class="d-flex align-items-center gap-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
+                                <div class="bg-light rounded-3 p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 52px; height: 52px;">
                                     {% if item.imagen_url %}
-                                        <img src="{{ item.imagen_url }}" class="img-fluid rounded" style="max-width: 48px; max-height: 48px; object-fit: contain;">
+                                        <img src="{{ item.imagen_url }}" class="img-fluid rounded" style="max-width: 44px; max-height: 44px; object-fit: contain;">
                                     {% else %}
                                         <i class="bi bi-box text-primary"></i>
                                     {% endif %}
                                 </div>
                                 <div class="flex-grow-1 min-w-0">
-                                    <div class="fw-semibold text-dark text-truncate">{{ item.nombre }}</div>
-                                    <div class="small text-muted">{{ item.cantidad }} × ${{ item.precio|floatformat:2 }}</div>
+                                    <div class="fw-semibold text-dark text-truncate small">{{ item.nombre }}</div>
+                                    <div class="small text-muted">{{ item.cantidad }} un. × ${{ item.precio|floatformat:2 }}</div>
                                 </div>
-                                <div class="fw-bold text-primary flex-shrink-0 align-self-center">
-                                    ${{ item.precio|floatformat:2 }}
+                                <div class="text-end flex-shrink-0">
+                                    <div class="fw-bold text-dark small">${{ item.precio|floatformat:2 }}</div>
+                                    <a href="{% url 'catalogo:eliminar_del_carrito' item.producto_id %}" class="text-danger small text-decoration-none" title="Quitar del carrito">
+                                        <i class="bi bi-x-circle"></i>
+                                    </a>
                                 </div>
                             </div>
                         {% endfor %}
                     </div>
 
-                    <div class="d-flex justify-content-between mb-2 small text-muted">
-                        <span>Subtotal ({{ carrito|length }} item{{ carrito|length|pluralize }})</span>
-                        <span>${{ total|floatformat:2 }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-4 small text-muted">
-                        <span>Envío</span>
-                        <span class="text-success fw-semibold">Gratis</span>
-                    </div>
-                    <div class="border-top pt-3 mb-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="h5 fw-bold mb-0 text-dark">Total</span>
-                            <span class="h3 fw-bold text-primary mb-0">${{ total|floatformat:2 }}</span>
+                    <div class="bg-light p-3 rounded-3 mb-4">
+                        <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>Subtotal</span>
+                            <span class="fw-semibold text-dark">${{ total|floatformat:2 }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>Costo de Envío</span>
+                            <span class="text-success fw-bold">GRATIS</span>
+                        </div>
+                        <hr class="my-2 text-secondary opacity-25">
+                        <div class="d-flex justify-content-between align-items-center pt-1">
+                            <span class="fw-bold text-dark">Total a Pagar</span>
+                            <span class="h4 fw-extrabold text-primary mb-0">${{ total|floatformat:2 }}</span>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-semibold mb-3" id="submit-btn">
-                        <i class="bi bi-check-circle me-2"></i>Confirmar Pedido
-                    </button>
-                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary w-100 py-2">
-                        <i class="bi bi-arrow-left me-1"></i>Seguir Comprando
-                    </a>
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="bi bi-cart-x display-4 text-muted mb-3 d-block"></i>
-                        <h5 class="text-muted mb-2">Tu carrito está vacío</h5>
-                        <p class="text-muted small mb-3">Agrega productos para continuar con tu compra.</p>
-                        <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-primary">
-                            <i class="bi bi-shop me-1"></i>Ver Catálogo
-                        </a>
+                    <div class="d-lg-none mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm" id="submit-btn-sm">
+                            <i class="bi bi-lock-fill me-2"></i>Confirmar Pedido
+                        </button>
                     </div>
-                {% endif %}
+
+                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary w-100 py-2 rounded-pill small">
+                        <i class="bi bi-arrow-left me-1"></i>Seguir comprando
+                    </a>
+                </div>
+                </form>
             </div>
-            </form>
         </div>
-    </div>
+    {% else %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-white rounded-4 p-5 text-center my-4">
+                <i class="bi bi-cart-x display-1 text-muted mb-3 opacity-50"></i>
+                <h3 class="fw-bold text-dark mb-2">Tu carrito está vacío</h3>
+                <p class="text-muted mb-4 max-w-md mx-auto">
+                    Aún no has agregado ningún producto a tu orden. Visita nuestro catálogo para seleccionar lo que buscas.
+                </p>
+                <div>
+                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-pill shadow-sm">
+                        <i class="bi bi-grid-fill me-2"></i>Explorar Catálogo
+                    </a>
+                </div>
+            </div>
+        </div>
+    {% endif %}
 </div>
 
 <script>
     const form = document.getElementById('pedido-form');
-    const submitBtn = document.getElementById('submit-btn');
-    if (form && submitBtn) {
+    if (form) {
         form.addEventListener('submit', function() {
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Procesando...';
+            const btnLg = document.getElementById('submit-btn-lg');
+            const btnSm = document.getElementById('submit-btn-sm');
+            if (btnLg) {
+                btnLg.disabled = true;
+                btnLg.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Procesando pedido...';
+            }
+            if (btnSm) {
+                btnSm.disabled = true;
+                btnSm.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Procesando...';
+            }
         });
     }
 </script>
 {% endblock %}
+

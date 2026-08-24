@@ -3,124 +3,143 @@
 {% block title %}{{ producto.nombre }} - TechGear{% endblock %}
 
 {% block content %}
+<!-- Breadcrumb -->
 <nav aria-label="breadcrumb" class="mb-4">
-    <ol class="breadcrumb mb-0">
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:home' %}" class="text-decoration-none">Inicio</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none">Catálogo</a></li>
-        <li class="breadcrumb-item active" aria-current="page">{{ producto.nombre|truncatechars:30 }}</li>
+    <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm mb-0">
+        <li class="breadcrumb-item"><a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted"><i class="bi bi-house me-1"></i>Inicio</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none text-muted">Catálogo</a></li>
+        {% if producto.categoria %}
+            <li class="breadcrumb-item"><a href="{% url 'catalogo:lista_productos' %}?categoria={{ producto.categoria|urlencode }}" class="text-decoration-none text-muted">{{ producto.categoria }}</a></li>
+        {% endif %}
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">{{ producto.nombre|truncatechars:35 }}</li>
     </ol>
 </nav>
 
-<div class="row g-5">
+<div class="row g-4 g-lg-5">
+    <!-- Columna Izquierda: Imagen y Estado -->
     <div class="col-lg-5">
-        <div class="card border-0 shadow-sm bg-white rounded-4 overflow-hidden sticky-top" style="top: 1rem;">
-            <div class="bg-primary bg-opacity-10 p-5 text-center" style="min-height: 350px; display: flex; align-items: center; justify-content: center;">
+        <div class="card border-0 shadow-sm bg-white rounded-4 overflow-hidden sticky-top" style="top: 6rem;">
+            <div class="product-detail-image-wrapper bg-light p-5 text-center d-flex align-items-center justify-content-center" style="min-height: 380px;">
                 {% if producto.imagen_url %}
-                    <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-fluid rounded" style="max-height: 320px; object-fit: contain;">
+                    <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-fluid rounded-3" style="max-height: 320px; object-fit: contain;">
                 {% else %}
-                    <i class="bi bi-box text-primary display-1 opacity-50"></i>
+                    <i class="bi bi-cpu text-primary display-1 opacity-50"></i>
                 {% endif %}
             </div>
-            <div class="card-body p-4">
+            <div class="card-body p-4 border-top">
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fw-medium">
+                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fw-semibold rounded-pill">
                         <i class="bi bi-tag me-1"></i>{{ producto.categoria }}
                     </span>
                     {% if producto.marca %}
-                        <span class="badge bg-secondary bg-opacity-10 text-secondary px-3 py-2 fw-medium">
+                        <span class="badge bg-dark bg-opacity-75 text-white px-3 py-2 fw-medium rounded-pill">
                             <i class="bi bi-patch-check me-1"></i>{{ producto.marca }}
                         </span>
                     {% endif %}
                 </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    {% if producto.activo %}
-                        <span class="badge bg-success bg-opacity-10 text-success">
-                            <i class="bi bi-check-circle me-1"></i>Disponible
-                        </span>
-                    {% else %}
-                        <span class="badge bg-danger bg-opacity-10 text-danger">
-                            <i class="bi bi-x-circle me-1"></i>No disponible
-                        </span>
-                    {% endif %}
-                    <small class="text-muted">ID: {{ producto.id }}</small>
+                <div class="d-flex justify-content-between align-items-center small text-muted">
+                    <span>
+                        {% if producto.activo and producto.stock > 0 %}
+                            <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Disponible para entrega inmediata</span>
+                        {% else %}
+                            <span class="text-danger fw-semibold"><i class="bi bi-x-circle-fill me-1"></i>No disponible</span>
+                        {% endif %}
+                    </span>
+                    <code>ID: {{ producto.id|slice:":8" }}...</code>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Columna Derecha: Información y Formulario de Compra -->
     <div class="col-lg-7">
-        <div class="mb-4">
-            <h1 class="display-6 fw-bold text-dark mb-3">{{ producto.nombre }}</h1>
-            <div class="d-flex align-items-center flex-wrap gap-3 mb-4">
-                <span class="display-5 fw-bold text-primary mb-0">${{ producto.precio|floatformat:2 }}</span>
-                {% if producto.stock > 0 %}
-                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2">
-                        <i class="bi bi-check-circle me-1"></i>{{ producto.stock }} unidades en stock
-                    </span>
-                {% else %}
-                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2">
-                        <i class="bi bi-x-circle me-1"></i>Agotado
-                    </span>
+        <div class="card border-0 shadow-sm bg-white rounded-4 p-4 p-md-5 mb-4">
+            <div class="mb-3">
+                {% if producto.marca %}
+                    <span class="text-uppercase text-muted fw-bold small letter-spacing-1">{{ producto.marca }}</span>
                 {% endif %}
+                <h1 class="h2 fw-bold text-dark mt-1 mb-3">{{ producto.nombre }}</h1>
             </div>
-        </div>
 
-        <div class="card border-0 shadow-sm bg-white rounded-4 mb-4">
-            <div class="card-body p-4">
-                <h5 class="fw-bold mb-3 text-dark">
-                    <i class="bi bi-file-text me-2 text-primary"></i>Descripción
-                </h5>
-                <p class="text-muted mb-0" style="line-height: 1.7;">{{ producto.descripcion }}</p>
+            <!-- Precio y Stock -->
+            <div class="d-flex align-items-baseline flex-wrap gap-3 p-3 bg-light rounded-4 mb-4">
+                <span class="display-6 fw-extrabold text-primary mb-0">${{ producto.precio|floatformat:2 }}</span>
+                <span class="text-muted small">USD (IVA incluido)</span>
+                <div class="ms-auto">
+                    {% if producto.stock > 0 %}
+                        <span class="badge bg-success bg-opacity-10 text-success fs-6 px-3 py-2 rounded-pill">
+                            <i class="bi bi-box-seam me-1"></i>{{ producto.stock }} en stock
+                        </span>
+                    {% else %}
+                        <span class="badge bg-danger bg-opacity-10 text-danger fs-6 px-3 py-2 rounded-pill">
+                            <i class="bi bi-x-circle me-1"></i>Agotado
+                        </span>
+                    {% endif %}
+                </div>
             </div>
-        </div>
 
-        <div class="card border-0 shadow-sm bg-white rounded-4 mb-4">
-            <div class="card-body p-4">
-                <h5 class="fw-bold mb-4 text-dark">
-                    <i class="bi bi-cart-plus me-2 text-primary"></i>Agregar al Carrito
+            <!-- Descripción -->
+            <div class="mb-4">
+                <h5 class="fw-bold text-dark mb-2">
+                    <i class="bi bi-text-paragraph text-primary me-2"></i>Descripción del Producto
                 </h5>
+                <p class="text-muted mb-0 lh-lg" style="white-space: pre-line;">{{ producto.descripcion }}</p>
+            </div>
+
+            <hr class="my-4 text-secondary opacity-25">
+
+            <!-- Formulario de Compra -->
+            <div>
+                <h5 class="fw-bold text-dark mb-3">
+                    <i class="bi bi-cart-plus text-primary me-2"></i>Agregar al Pedido
+                </h5>
+
                 {% if producto.stock > 0 and producto.activo %}
-                    <form method="post">
+                    <form method="post" class="mt-3">
                         {% csrf_token %}
                         <div class="row g-3 align-items-end mb-4">
-                            <div class="col-md-6">
-                                <label for="cantidad" class="form-label fw-medium">Cantidad</label>
+                            <div class="col-sm-6">
+                                <label for="cantidad" class="form-label fw-semibold text-dark small">Seleccionar Cantidad:</label>
                                 <div class="input-group input-group-lg">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="restarCantidad()">
-                                        <i class="bi bi-dash"></i>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="restarCantidad()" aria-label="Disminuir">
+                                        <i class="bi bi-dash-lg"></i>
                                     </button>
                                     <input type="number" id="cantidad" name="cantidad"
-                                           class="form-control text-center fw-bold"
+                                           class="form-control text-center fw-bold fs-5"
                                            value="1" min="1" max="{{ producto.stock }}">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="sumarCantidad()">
-                                        <i class="bi bi-plus"></i>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="sumarCantidad()" aria-label="Aumentar">
+                                        <i class="bi bi-plus-lg"></i>
                                     </button>
                                 </div>
-                                <small class="text-muted">Máximo: {{ producto.stock }} unidades</small>
+                                <div class="form-text small text-muted">Stock máximo permitido: {{ producto.stock }} un.</div>
                             </div>
-                            <div class="col-md-6 text-md-end">
-                                <div class="text-muted small mb-1">Subtotal</div>
-                                <div class="h4 fw-bold text-primary mb-0" id="subtotal-display">
+                            <div class="col-sm-6 text-sm-end">
+                                <div class="text-muted small">Total estimado:</div>
+                                <div class="h3 fw-bold text-primary mb-0" id="subtotal-display">
                                     ${{ producto.precio|floatformat:2 }}
                                 </div>
                             </div>
                         </div>
-                        <div class="d-flex gap-3">
-                            <button type="submit" class="btn btn-primary btn-lg px-5 py-3 fw-semibold flex-grow-1">
-                                <i class="bi bi-cart-plus me-2"></i>Agregar al Carrito
+
+                        <div class="d-flex flex-wrap gap-3">
+                            <button type="submit" class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-pill flex-grow-1 shadow-sm">
+                                <i class="bi bi-cart-plus-fill me-2"></i>Agregar al Carrito
                             </button>
-                            <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary btn-lg px-4 py-3">
-                                <i class="bi bi-arrow-left"></i>
+                            <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary btn-lg px-4 py-3 rounded-pill">
+                                <i class="bi bi-arrow-left me-1"></i>Volver
                             </a>
                         </div>
                     </form>
                 {% else %}
-                    <div class="alert alert-warning mb-0">
-                        <i class="bi bi-exclamation-triangle me-2"></i>
-                        Este producto no está disponible para la venta en este momento.
+                    <div class="alert alert-danger border-0 rounded-4 p-4 d-flex align-items-center gap-3">
+                        <i class="bi bi-exclamation-octagon-fill fs-3 text-danger"></i>
+                        <div>
+                            <h6 class="fw-bold mb-1">Producto no disponible temporalmente</h6>
+                            <p class="mb-0 small text-muted">Este artículo no cuenta con existencias para compra en línea en este instante.</p>
+                        </div>
                     </div>
-                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-primary mt-3">
-                        <i class="bi bi-arrow-left me-1"></i>Volver al catálogo
+                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-primary mt-2 rounded-pill px-4">
+                        <i class="bi bi-arrow-left me-1"></i>Explorar otros productos
                     </a>
                 {% endif %}
             </div>
@@ -133,14 +152,18 @@
     const maxStock = {{ producto.stock }};
 
     function actualizarSubtotal() {
-        const cantidad = parseInt(document.getElementById('cantidad').value) || 0;
+        const input = document.getElementById('cantidad');
+        let cantidad = parseInt(input.value) || 1;
+        if (cantidad < 1) cantidad = 1;
+        if (cantidad > maxStock) cantidad = maxStock;
+        input.value = cantidad;
         const subtotal = (precioUnitario * cantidad).toFixed(2);
         document.getElementById('subtotal-display').textContent = '$' + subtotal;
     }
 
     function sumarCantidad() {
         const input = document.getElementById('cantidad');
-        const valor = parseInt(input.value) || 0;
+        let valor = parseInt(input.value) || 0;
         if (valor < maxStock) {
             input.value = valor + 1;
             actualizarSubtotal();
@@ -149,19 +172,18 @@
 
     function restarCantidad() {
         const input = document.getElementById('cantidad');
-        const valor = parseInt(input.value) || 0;
+        let valor = parseInt(input.value) || 0;
         if (valor > 1) {
             input.value = valor - 1;
             actualizarSubtotal();
         }
     }
 
-    document.getElementById('cantidad').addEventListener('input', function() {
-        let valor = parseInt(this.value) || 1;
-        if (valor < 1) valor = 1;
-        if (valor > maxStock) valor = maxStock;
-        this.value = valor;
-        actualizarSubtotal();
-    });
+    const cantidadInput = document.getElementById('cantidad');
+    if (cantidadInput) {
+        cantidadInput.addEventListener('input', actualizarSubtotal);
+        cantidadInput.addEventListener('change', actualizarSubtotal);
+    }
 </script>
 {% endblock %}
+
