@@ -1,119 +1,270 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{# ================================================================
+   CLASE 5 — Django Formularios y Pedidos
+   crear_pedido.html: Vista "Checkout" — Captura de datos del cliente
+   Flujo:
+     1. Django muestra el formulario HTML con el carrito de sesión
+     2. El usuario completa sus datos y hace clic en "Confirmar"
+     3. Django recibe el POST en la view crear_pedido()
+     4. La view llama a api_client.crear_pedido() que hace POST → FastAPI
+     5. FastAPI valida stock, calcula total y guarda en MongoDB
+     6. Django redirige al detalle del pedido creado
+
+   Template Tags usados:
+     - {% csrf_token %}          token de seguridad requerido en todo POST
+     - {% for item in carrito %} iteración del carrito (almacenado en sesión)
+     - {{ carrito|length }}      longitud de la lista del carrito
+     - {{ total|floatformat:2 }} filtro de formato de precio
+     - {% if carrito %}          condicional para mostrar/ocultar formulario
+     - {% url %}                 resolución de rutas nombradas
+================================================================ #}
 
 {% block title %}Finalizar Compra - TechGear{% endblock %}
 
 {% block content %}
-<!-- Breadcrumb -->
+
+{# ── BREADCRUMB ─────────────────────────────────────────────────── #}
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm mb-0">
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted"><i class="bi bi-house me-1"></i>Inicio</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none text-muted">Catálogo</a></li>
-        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Finalizar Compra</li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted">
+                <i class="bi bi-house me-1"></i>Inicio
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none text-muted">
+                Catálogo
+            </a>
+        </li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+            Finalizar Compra
+        </li>
     </ol>
 </nav>
 
+{# ── TÍTULO Y BOTÓN VACIAR ──────────────────────────────────────── #}
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
     <h1 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
         <i class="bi bi-credit-card-2-front-fill text-primary"></i>Finalizar Compra
     </h1>
     {% if carrito %}
-        <a href="{% url 'catalogo:vaciar_carrito' %}" class="btn btn-outline-danger btn-sm rounded-pill px-3" onclick="return confirm('¿Estás seguro de que deseas vaciar tu carrito?');">
+        <a href="{% url 'catalogo:vaciar_carrito' %}"
+           class="btn btn-outline-danger btn-sm rounded-pill px-3"
+           onclick="return confirm('¿Estás seguro de que deseas vaciar tu carrito?');">
             <i class="bi bi-trash3 me-1"></i>Vaciar Carrito
         </a>
     {% endif %}
 </div>
 
-<div class="row g-4 g-lg-5">
-    {% if carrito %}
-        <!-- Formulario de Datos del Cliente -->
+{# ── INDICADOR DE PASOS (Checkout Steps) ────────────────────────── #}
+{% if carrito %}
+<div class="checkout-steps mb-5">
+    <div class="checkout-step done">
+        <div class="step-circle"><i class="bi bi-check-lg"></i></div>
+        <div class="step-label">Catálogo</div>
+    </div>
+    <div class="checkout-step done">
+        <div class="step-circle"><i class="bi bi-check-lg"></i></div>
+        <div class="step-label">Carrito</div>
+    </div>
+    <div class="checkout-step active">
+        <div class="step-circle">3</div>
+        <div class="step-label">Datos</div>
+    </div>
+    <div class="checkout-step">
+        <div class="step-circle">4</div>
+        <div class="step-label">Confirmar</div>
+    </div>
+</div>
+{% endif %}
+
+{# ================================================================
+   CLASE 5 — FORMULARIO PRINCIPAL CON MÉTODO POST
+   El <form> envuelve AMBAS columnas para que el botón en el resumen
+   también dispare el submit al mismo endpoint.
+================================================================ #}
+
+{% if carrito %}
+
+{# Template Tag: {% if carrito %} — mostrar formulario solo si hay items en sesión #}
+
+<form method="post" id="pedido-form">
+    {# ── Template Tag: {% csrf_token %} ──────────────────────────
+       Obligatorio en TODOS los formularios POST de Django.
+       Genera un campo oculto con el token CSRF para proteger
+       contra ataques Cross-Site Request Forgery.
+    ── #}
+    {% csrf_token %}
+
+    <div class="row g-4 g-lg-5">
+
+        {# ── COLUMNA IZQUIERDA: DATOS DEL CLIENTE ──────────────── #}
         <div class="col-lg-7">
             <div class="card border-0 shadow-sm bg-white rounded-4 p-4 p-md-5">
                 <h5 class="fw-bold mb-4 text-dark d-flex align-items-center gap-2">
-                    <i class="bi bi-person-circle text-primary"></i>1. Datos de Contacto y Envío
+                    <i class="bi bi-person-circle text-primary"></i>
+                    1. Datos de Contacto y Envío
                 </h5>
-                <form method="post" id="pedido-form">
-                    {% csrf_token %}
-                    <div class="row g-3 mb-4">
-                        <div class="col-md-7">
-                            <label for="cliente_nombre" class="form-label fw-semibold text-dark small">Nombre Completo *</label>
-                            <input type="text" id="cliente_nombre" name="cliente_nombre"
-                                   class="form-control form-control-lg rounded-3" required minlength="2"
-                                   placeholder="Ej: Carlos Andrés Rodríguez">
-                        </div>
-                        <div class="col-md-5">
-                            <label for="cliente_telefono" class="form-label fw-semibold text-dark small">Teléfono Móvil</label>
-                            <input type="tel" id="cliente_telefono" name="cliente_telefono"
-                                   class="form-control form-control-lg rounded-3"
-                                   placeholder="Ej: 3101234567">
-                        </div>
-                        <div class="col-12">
-                            <label for="cliente_email" class="form-label fw-semibold text-dark small">Correo Electrónico *</label>
-                            <input type="email" id="cliente_email" name="cliente_email"
-                                   class="form-control form-control-lg rounded-3" required
-                                   placeholder="tu.correo@dominio.com">
-                            <div class="form-text small text-muted">Te enviaremos el número de guía y confirmación por este medio.</div>
-                        </div>
-                        <div class="col-12">
-                            <label for="direccion_envio" class="form-label fw-semibold text-dark small">Dirección Completa de Envío *</label>
-                            <textarea id="direccion_envio" name="direccion_envio"
-                                      class="form-control form-control-lg rounded-3" required rows="3"
-                                      minlength="10"
-                                      placeholder="Calle / Carrera, Número, Apartamento/Torre, Barrio, Ciudad, Departamento"></textarea>
-                        </div>
-                        <div class="col-12">
-                            <label for="notas" class="form-label fw-semibold text-dark small">Notas de Entrega (Opcional)</label>
-                            <textarea id="notas" name="notas"
-                                      class="form-control rounded-3" rows="2"
-                                      placeholder="Ej: Dejar en portería, timbrar al apto 402..."></textarea>
+
+                <div class="row g-3 mb-4">
+
+                    {# Campo: Nombre completo (requerido) #}
+                    <div class="col-md-7">
+                        <label for="cliente_nombre" class="form-label fw-semibold text-dark small">
+                            Nombre Completo <span class="text-danger">*</span>
+                        </label>
+                        <input type="text"
+                               id="cliente_nombre"
+                               name="cliente_nombre"
+                               class="form-control form-control-lg rounded-3"
+                               required
+                               minlength="2"
+                               placeholder="Ej: Carlos Andrés Rodríguez">
+                    </div>
+
+                    {# Campo: Teléfono (opcional) #}
+                    <div class="col-md-5">
+                        <label for="cliente_telefono" class="form-label fw-semibold text-dark small">
+                            Teléfono Móvil
+                        </label>
+                        <input type="tel"
+                               id="cliente_telefono"
+                               name="cliente_telefono"
+                               class="form-control form-control-lg rounded-3"
+                               placeholder="Ej: 3101234567">
+                    </div>
+
+                    {# Campo: Email (requerido) — se usará para buscar pedidos luego #}
+                    <div class="col-12">
+                        <label for="cliente_email" class="form-label fw-semibold text-dark small">
+                            Correo Electrónico <span class="text-danger">*</span>
+                        </label>
+                        <input type="email"
+                               id="cliente_email"
+                               name="cliente_email"
+                               class="form-control form-control-lg rounded-3"
+                               required
+                               placeholder="tu.correo@dominio.com">
+                        <div class="form-text small text-muted">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Te enviaremos la confirmación y número de guía por este medio.
                         </div>
                     </div>
 
-                    <div class="d-none d-lg-block">
-                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm" id="submit-btn-lg">
-                            <i class="bi bi-lock-fill me-2"></i>Confirmar y Enviar Pedido
-                        </button>
+                    {# Campo: Dirección de envío (requerida, mínimo 10 caracteres) #}
+                    <div class="col-12">
+                        <label for="direccion_envio" class="form-label fw-semibold text-dark small">
+                            Dirección Completa de Envío <span class="text-danger">*</span>
+                        </label>
+                        <textarea id="direccion_envio"
+                                  name="direccion_envio"
+                                  class="form-control form-control-lg rounded-3"
+                                  required
+                                  rows="3"
+                                  minlength="10"
+                                  placeholder="Calle / Carrera, Número, Apartamento, Barrio, Ciudad, Departamento"></textarea>
                     </div>
+
+                    {# Campo: Notas adicionales (opcional) #}
+                    <div class="col-12">
+                        <label for="notas" class="form-label fw-semibold text-dark small">
+                            Notas de Entrega <span class="text-muted fw-normal">(Opcional)</span>
+                        </label>
+                        <textarea id="notas"
+                                  name="notas"
+                                  class="form-control rounded-3"
+                                  rows="2"
+                                  placeholder="Ej: Dejar en portería, timbrar al apto 402..."></textarea>
+                    </div>
+                </div>
+
+                {# Botón submit visible en pantallas grandes #}
+                <div class="d-none d-lg-block">
+                    <button type="submit"
+                            class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm"
+                            id="submit-btn-lg">
+                        <i class="bi bi-lock-fill me-2"></i>Confirmar y Enviar Pedido
+                    </button>
+                    <p class="text-center text-muted small mt-2 mb-0">
+                        <i class="bi bi-shield-lock me-1 text-success"></i>
+                        Conexión segura · Los datos van directo a la API
+                    </p>
+                </div>
             </div>
         </div>
 
-        <!-- Resumen del Carrito -->
+        {# ── COLUMNA DERECHA: RESUMEN DEL CARRITO ──────────────── #}
         <div class="col-lg-5">
-            <div class="card border-0 shadow-sm bg-white rounded-4 sticky-top overflow-hidden" style="top: 6rem;">
+            <div class="card border-0 shadow-sm bg-white rounded-4 sticky-top overflow-hidden"
+                 style="top: 6rem;">
+
                 <div class="card-header bg-light border-0 py-3 px-4 d-flex justify-content-between align-items-center">
                     <h5 class="fw-bold mb-0 text-dark">
                         <i class="bi bi-cart-check-fill text-primary me-2"></i>Resumen de Compra
                     </h5>
-                    <span class="badge bg-primary rounded-pill">{{ carrito|length }} item{{ carrito|length|pluralize }}</span>
+                    {# Filtro {{ carrito|length }} — cuenta ítems en el carrito de sesión #}
+                    <span class="badge bg-primary rounded-pill">
+                        {{ carrito|length }} item{{ carrito|length|pluralize }}
+                    </span>
                 </div>
+
                 <div class="card-body p-4">
+
+                    {# Lista de productos del carrito — datos de request.session['carrito'] #}
                     <div class="cart-items-list mb-3" style="max-height: 300px; overflow-y: auto;">
+
+                        {# Template Tag: {% for item in carrito %} — iteración del carrito de sesión #}
                         {% for item in carrito %}
                             <div class="d-flex align-items-center gap-3 py-3 {% if not forloop.last %}border-bottom{% endif %}">
-                                <div class="bg-light rounded-3 p-2 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 52px; height: 52px;">
+
+                                {# Imagen del item o ícono placeholder #}
+                                <div class="bg-light rounded-3 p-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                                     style="width: 52px; height: 52px;">
                                     {% if item.imagen_url %}
-                                        <img src="{{ item.imagen_url }}" class="img-fluid rounded" style="max-width: 44px; max-height: 44px; object-fit: contain;">
+                                        <img src="{{ item.imagen_url }}"
+                                             class="img-fluid rounded"
+                                             style="max-width: 44px; max-height: 44px; object-fit: contain;">
                                     {% else %}
                                         <i class="bi bi-box text-primary"></i>
                                     {% endif %}
                                 </div>
+
+                                {# Datos del item del carrito (nombre, cantidad, precio) #}
                                 <div class="flex-grow-1 min-w-0">
-                                    <div class="fw-semibold text-dark text-truncate small">{{ item.nombre }}</div>
-                                    <div class="small text-muted">{{ item.cantidad }} un. × ${{ item.precio|floatformat:2 }}</div>
+                                    <div class="fw-semibold text-dark text-truncate small">
+                                        {{ item.nombre }}
+                                    </div>
+                                    <div class="small text-muted">
+                                        {# Filtro |floatformat:2 — precio unitario formateado #}
+                                        {{ item.cantidad }} un. × ${{ item.precio|floatformat:2 }}
+                                    </div>
                                 </div>
+
                                 <div class="text-end flex-shrink-0">
-                                    <div class="fw-bold text-dark small">${{ item.precio|floatformat:2 }}</div>
-                                    <a href="{% url 'catalogo:eliminar_del_carrito' item.producto_id %}" class="text-danger small text-decoration-none" title="Quitar del carrito">
+                                    <div class="fw-bold text-dark small">
+                                        ${{ item.precio|floatformat:2 }}
+                                    </div>
+                                    {# Enlace para eliminar este item del carrito (GET request) #}
+                                    <a href="{% url 'catalogo:eliminar_del_carrito' item.producto_id %}"
+                                       class="text-danger small text-decoration-none"
+                                       title="Quitar del carrito">
                                         <i class="bi bi-x-circle"></i>
                                     </a>
                                 </div>
                             </div>
+                        {# fin {% for item in carrito %} #}
                         {% endfor %}
                     </div>
 
+                    {# Resumen de totales #}
                     <div class="bg-light p-3 rounded-3 mb-4">
                         <div class="d-flex justify-content-between mb-2 small text-muted">
                             <span>Subtotal</span>
-                            <span class="fw-semibold text-dark">${{ total|floatformat:2 }}</span>
+                            <span class="fw-semibold text-dark">
+                                ${{ total|floatformat:2 }}
+                            </span>
                         </div>
                         <div class="d-flex justify-content-between mb-2 small text-muted">
                             <span>Costo de Envío</span>
@@ -122,57 +273,71 @@
                         <hr class="my-2 text-secondary opacity-25">
                         <div class="d-flex justify-content-between align-items-center pt-1">
                             <span class="fw-bold text-dark">Total a Pagar</span>
-                            <span class="h4 fw-extrabold text-primary mb-0">${{ total|floatformat:2 }}</span>
+                            {# Total calculado en la view de Django a partir del carrito de sesión #}
+                            <span class="h4 fw-extrabold text-primary mb-0">
+                                ${{ total|floatformat:2 }}
+                            </span>
                         </div>
                     </div>
 
+                    {# Botón submit en pantallas pequeñas (dentro del form, ambos hacen submit) #}
                     <div class="d-lg-none mb-3">
-                        <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm" id="submit-btn-sm">
+                        <button type="submit"
+                                class="btn btn-primary btn-lg w-100 py-3 fw-bold rounded-pill shadow-sm"
+                                id="submit-btn-sm">
                             <i class="bi bi-lock-fill me-2"></i>Confirmar Pedido
                         </button>
                     </div>
 
-                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary w-100 py-2 rounded-pill small">
+                    <a href="{% url 'catalogo:lista_productos' %}"
+                       class="btn btn-outline-secondary w-100 py-2 rounded-pill small">
                         <i class="bi bi-arrow-left me-1"></i>Seguir comprando
                     </a>
                 </div>
-                </form>
             </div>
         </div>
-    {% else %}
-        <div class="col-12">
-            <div class="card border-0 shadow-sm bg-white rounded-4 p-5 text-center my-4">
-                <i class="bi bi-cart-x display-1 text-muted mb-3 opacity-50"></i>
-                <h3 class="fw-bold text-dark mb-2">Tu carrito está vacío</h3>
-                <p class="text-muted mb-4 max-w-md mx-auto">
-                    Aún no has agregado ningún producto a tu orden. Visita nuestro catálogo para seleccionar lo que buscas.
-                </p>
-                <div>
-                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-pill shadow-sm">
-                        <i class="bi bi-grid-fill me-2"></i>Explorar Catálogo
-                    </a>
-                </div>
+
+    </div>
+</form>
+{# ── FIN DEL FORMULARIO POST ── el <form> cierra aquí correctamente #}
+
+{% else %}
+    {# ── CARRITO VACÍO ─────────────────────────────────────────── #}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm bg-white rounded-4 p-5 text-center my-4">
+            <i class="bi bi-cart-x display-1 text-muted mb-3 opacity-50"></i>
+            <h3 class="fw-bold text-dark mb-2">Tu carrito está vacío</h3>
+            <p class="text-muted mb-4 max-w-md mx-auto">
+                Aún no has agregado ningún producto a tu orden.
+                Visita nuestro catálogo para seleccionar lo que buscas.
+            </p>
+            <div>
+                <a href="{% url 'catalogo:lista_productos' %}"
+                   class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-pill shadow-sm">
+                    <i class="bi bi-grid-fill me-2"></i>Explorar Catálogo
+                </a>
             </div>
         </div>
-    {% endif %}
-</div>
+    </div>
+{% endif %}
 
 <script>
+    /* Deshabilitar botones al hacer submit para evitar doble envío */
     const form = document.getElementById('pedido-form');
     if (form) {
-        form.addEventListener('submit', function() {
+        form.addEventListener('submit', function () {
             const btnLg = document.getElementById('submit-btn-lg');
             const btnSm = document.getElementById('submit-btn-sm');
             if (btnLg) {
                 btnLg.disabled = true;
-                btnLg.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Procesando pedido...';
+                btnLg.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Procesando pedido…';
             }
             if (btnSm) {
                 btnSm.disabled = true;
-                btnSm.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Procesando...';
+                btnSm.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status"></span>Procesando…';
             }
         });
     }
 </script>
-{% endblock %}
 
+{% endblock %}

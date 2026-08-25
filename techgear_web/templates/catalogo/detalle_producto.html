@@ -1,69 +1,123 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{# ================================================================
+   CLASE 4 — Django Templates y Catálogo
+   detalle_producto.html: Vista de producto individual
+   Template Tags usados:
+     - {{ producto.nombre }}            variable de contexto
+     - {{ producto.precio|floatformat}} filtro de formato
+     - {% if producto.imagen_url %}     condicional de imagen
+     - {% if producto.stock > 0 %}      condicional de stock
+     - {% url %}                        resolución de URL
+     - {% csrf_token %}                 token de seguridad para POST
+     - {{ producto.id|slice:":8" }}     filtro de corte de string
+================================================================ #}
 
 {% block title %}{{ producto.nombre }} - TechGear{% endblock %}
 
 {% block content %}
-<!-- Breadcrumb -->
+
+{# ── BREADCRUMB ─────────────────────────────────────────────────── #}
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm mb-0">
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted"><i class="bi bi-house me-1"></i>Inicio</a></li>
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none text-muted">Catálogo</a></li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted">
+                <i class="bi bi-house me-1"></i>Inicio
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none text-muted">
+                Catálogo
+            </a>
+        </li>
+        {# Template Tag: {% if producto.categoria %} — nivel de categoría en breadcrumb #}
         {% if producto.categoria %}
-            <li class="breadcrumb-item"><a href="{% url 'catalogo:lista_productos' %}?categoria={{ producto.categoria|urlencode }}" class="text-decoration-none text-muted">{{ producto.categoria }}</a></li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'catalogo:lista_productos' %}?categoria={{ producto.categoria|urlencode }}"
+                   class="text-decoration-none text-muted">
+                    {{ producto.categoria }}
+                </a>
+            </li>
         {% endif %}
-        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">{{ producto.nombre|truncatechars:35 }}</li>
+        {# Filtro |truncatechars para no romper el breadcrumb en títulos largos #}
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+            {{ producto.nombre|truncatechars:35 }}
+        </li>
     </ol>
 </nav>
 
 <div class="row g-4 g-lg-5">
-    <!-- Columna Izquierda: Imagen y Estado -->
+
+    {# ── COLUMNA IZQUIERDA: IMAGEN ──────────────────────────────── #}
     <div class="col-lg-5">
         <div class="card border-0 shadow-sm bg-white rounded-4 overflow-hidden sticky-top" style="top: 6rem;">
-            <div class="product-detail-image-wrapper bg-light p-5 text-center d-flex align-items-center justify-content-center" style="min-height: 380px;">
+
+            <div class="product-detail-image-wrapper bg-light p-5 text-center d-flex align-items-center justify-content-center"
+                 style="min-height: 380px;">
+                {# Template Tag: {% if producto.imagen_url %} — imagen real o ícono #}
                 {% if producto.imagen_url %}
-                    <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-fluid rounded-3" style="max-height: 320px; object-fit: contain;">
+                    <img src="{{ producto.imagen_url }}"
+                         alt="{{ producto.nombre }}"
+                         class="img-fluid rounded-3"
+                         style="max-height: 320px; object-fit: contain;">
                 {% else %}
                     <i class="bi bi-cpu text-primary display-1 opacity-50"></i>
                 {% endif %}
             </div>
+
             <div class="card-body p-4 border-top">
                 <div class="d-flex flex-wrap gap-2 mb-3">
                     <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fw-semibold rounded-pill">
                         <i class="bi bi-tag me-1"></i>{{ producto.categoria }}
                     </span>
+                    {# Template Tag: {% if producto.marca %} — badge de marca opcional #}
                     {% if producto.marca %}
                         <span class="badge bg-dark bg-opacity-75 text-white px-3 py-2 fw-medium rounded-pill">
                             <i class="bi bi-patch-check me-1"></i>{{ producto.marca }}
                         </span>
                     {% endif %}
                 </div>
+
                 <div class="d-flex justify-content-between align-items-center small text-muted">
                     <span>
+                        {# Condicional anidado: activo Y con stock #}
                         {% if producto.activo and producto.stock > 0 %}
-                            <span class="text-success fw-semibold"><i class="bi bi-check-circle-fill me-1"></i>Disponible para entrega inmediata</span>
+                            <span class="text-success fw-semibold">
+                                <i class="bi bi-check-circle-fill me-1"></i>Disponible para entrega inmediata
+                            </span>
                         {% else %}
-                            <span class="text-danger fw-semibold"><i class="bi bi-x-circle-fill me-1"></i>No disponible</span>
+                            <span class="text-danger fw-semibold">
+                                <i class="bi bi-x-circle-fill me-1"></i>No disponible
+                            </span>
                         {% endif %}
                     </span>
-                    <code>ID: {{ producto.id|slice:":8" }}...</code>
+                    {# Filtro |slice para mostrar ID corto #}
+                    <code>ID: {{ producto.id|slice:":8" }}…</code>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Columna Derecha: Información y Formulario de Compra -->
+    {# ── COLUMNA DERECHA: INFO Y FORMULARIO DE COMPRA ─────────── #}
     <div class="col-lg-7">
         <div class="card border-0 shadow-sm bg-white rounded-4 p-4 p-md-5 mb-4">
+
             <div class="mb-3">
                 {% if producto.marca %}
-                    <span class="text-uppercase text-muted fw-bold small letter-spacing-1">{{ producto.marca }}</span>
+                    <span class="text-uppercase text-muted fw-bold small letter-spacing-1">
+                        {{ producto.marca }}
+                    </span>
                 {% endif %}
                 <h1 class="h2 fw-bold text-dark mt-1 mb-3">{{ producto.nombre }}</h1>
             </div>
 
-            <!-- Precio y Stock -->
+            {# ── PRECIO Y STOCK ── #}
             <div class="d-flex align-items-baseline flex-wrap gap-3 p-3 bg-light rounded-4 mb-4">
-                <span class="display-6 fw-extrabold text-primary mb-0">${{ producto.precio|floatformat:2 }}</span>
+                {# Filtro |floatformat:2 — precio con dos decimales #}
+                <span class="display-6 fw-extrabold text-primary mb-0">
+                    ${{ producto.precio|floatformat:2 }}
+                </span>
                 <span class="text-muted small">USD (IVA incluido)</span>
                 <div class="ms-auto">
                     {% if producto.stock > 0 %}
@@ -78,40 +132,62 @@
                 </div>
             </div>
 
-            <!-- Descripción -->
+            {# ── DESCRIPCIÓN ── #}
             <div class="mb-4">
                 <h5 class="fw-bold text-dark mb-2">
                     <i class="bi bi-text-paragraph text-primary me-2"></i>Descripción del Producto
                 </h5>
-                <p class="text-muted mb-0 lh-lg" style="white-space: pre-line;">{{ producto.descripcion }}</p>
+                <p class="text-muted mb-0 lh-lg" style="white-space: pre-line;">
+                    {{ producto.descripcion }}
+                </p>
             </div>
 
             <hr class="my-4 text-secondary opacity-25">
 
-            <!-- Formulario de Compra -->
+            {# ── FORMULARIO DE AGREGAR AL CARRITO (CLASE 5) ── #}
             <div>
                 <h5 class="fw-bold text-dark mb-3">
                     <i class="bi bi-cart-plus text-primary me-2"></i>Agregar al Pedido
                 </h5>
 
+                {# Template Tag: {% if producto.stock > 0 and producto.activo %} #}
                 {% if producto.stock > 0 and producto.activo %}
-                    <form method="post" class="mt-3" id="form-agregar-carrito" data-precio="{{ producto.precio }}" data-stock="{{ producto.stock }}">
+
+                    {# Formulario POST — envía al mismo endpoint (detalle_producto) #}
+                    <form method="post"
+                          class="mt-3"
+                          id="form-agregar-carrito"
+                          data-precio="{{ producto.precio }}"
+                          data-stock="{{ producto.stock }}">
+
+                        {# Template Tag: {% csrf_token %} — token de seguridad obligatorio #}
                         {% csrf_token %}
+
                         <div class="row g-3 align-items-end mb-4">
                             <div class="col-sm-6">
-                                <label for="cantidad" class="form-label fw-semibold text-dark small">Seleccionar Cantidad:</label>
+                                <label for="cantidad" class="form-label fw-semibold text-dark small">
+                                    Seleccionar Cantidad:
+                                </label>
                                 <div class="input-group input-group-lg">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="restarCantidad()" aria-label="Disminuir">
+                                    <button type="button"
+                                            class="btn btn-outline-secondary"
+                                            onclick="restarCantidad()"
+                                            aria-label="Disminuir">
                                         <i class="bi bi-dash-lg"></i>
                                     </button>
                                     <input type="number" id="cantidad" name="cantidad"
                                            class="form-control text-center fw-bold fs-5"
                                            value="1" min="1" max="{{ producto.stock }}">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="sumarCantidad()" aria-label="Aumentar">
+                                    <button type="button"
+                                            class="btn btn-outline-secondary"
+                                            onclick="sumarCantidad()"
+                                            aria-label="Aumentar">
                                         <i class="bi bi-plus-lg"></i>
                                     </button>
                                 </div>
-                                <div class="form-text small text-muted">Stock máximo permitido: {{ producto.stock }} un.</div>
+                                <div class="form-text small text-muted">
+                                    Stock máximo: {{ producto.stock }} un.
+                                </div>
                             </div>
                             <div class="col-sm-6 text-sm-end">
                                 <div class="text-muted small">Total estimado:</div>
@@ -122,23 +198,30 @@
                         </div>
 
                         <div class="d-flex flex-wrap gap-3">
-                            <button type="submit" class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-pill flex-grow-1 shadow-sm">
+                            <button type="submit"
+                                    class="btn btn-primary btn-lg px-5 py-3 fw-bold rounded-pill flex-grow-1 shadow-sm">
                                 <i class="bi bi-cart-plus-fill me-2"></i>Agregar al Carrito
                             </button>
-                            <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary btn-lg px-4 py-3 rounded-pill">
+                            <a href="{% url 'catalogo:lista_productos' %}"
+                               class="btn btn-outline-secondary btn-lg px-4 py-3 rounded-pill">
                                 <i class="bi bi-arrow-left me-1"></i>Volver
                             </a>
                         </div>
                     </form>
+
                 {% else %}
+                    {# Estado agotado — muestra alerta y botón para volver al catálogo #}
                     <div class="alert alert-danger border-0 rounded-4 p-4 d-flex align-items-center gap-3">
                         <i class="bi bi-exclamation-octagon-fill fs-3 text-danger"></i>
                         <div>
                             <h6 class="fw-bold mb-1">Producto no disponible temporalmente</h6>
-                            <p class="mb-0 small text-muted">Este artículo no cuenta con existencias para compra en línea en este instante.</p>
+                            <p class="mb-0 small text-muted">
+                                Este artículo no cuenta con existencias para compra en línea en este instante.
+                            </p>
                         </div>
                     </div>
-                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-primary mt-2 rounded-pill px-4">
+                    <a href="{% url 'catalogo:lista_productos' %}"
+                       class="btn btn-outline-primary mt-2 rounded-pill px-4">
                         <i class="bi bi-arrow-left me-1"></i>Explorar otros productos
                     </a>
                 {% endif %}
@@ -148,9 +231,10 @@
 </div>
 
 <script>
-    const formAgregar = document.getElementById('form-agregar-carrito');
+    /* Lógica de cantidad y subtotal dinámico */
+    const formAgregar   = document.getElementById('form-agregar-carrito');
     const precioUnitario = formAgregar ? parseFloat(formAgregar.dataset.precio || '0') : 0;
-    const maxStock = formAgregar ? parseInt(formAgregar.dataset.stock || '0', 10) : 0;
+    const maxStock       = formAgregar ? parseInt(formAgregar.dataset.stock  || '0', 10) : 0;
 
     function actualizarSubtotal() {
         const input = document.getElementById('cantidad');
@@ -159,38 +243,30 @@
         if (cantidad < 1) cantidad = 1;
         if (maxStock > 0 && cantidad > maxStock) cantidad = maxStock;
         input.value = cantidad;
-        const subtotal = (precioUnitario * cantidad).toFixed(2);
-        const subtotalEl = document.getElementById('subtotal-display');
-        if (subtotalEl) {
-            subtotalEl.textContent = '$' + subtotal;
-        }
+        const subtotal    = (precioUnitario * cantidad).toFixed(2);
+        const subtotalEl  = document.getElementById('subtotal-display');
+        if (subtotalEl) subtotalEl.textContent = '$' + subtotal;
     }
 
     function sumarCantidad() {
         const input = document.getElementById('cantidad');
         if (!input) return;
         let valor = parseInt(input.value, 10) || 0;
-        if (maxStock === 0 || valor < maxStock) {
-            input.value = valor + 1;
-            actualizarSubtotal();
-        }
+        if (maxStock === 0 || valor < maxStock) { input.value = valor + 1; actualizarSubtotal(); }
     }
 
     function restarCantidad() {
         const input = document.getElementById('cantidad');
         if (!input) return;
         let valor = parseInt(input.value, 10) || 0;
-        if (valor > 1) {
-            input.value = valor - 1;
-            actualizarSubtotal();
-        }
+        if (valor > 1) { input.value = valor - 1; actualizarSubtotal(); }
     }
 
     const cantidadInput = document.getElementById('cantidad');
     if (cantidadInput) {
-        cantidadInput.addEventListener('input', actualizarSubtotal);
+        cantidadInput.addEventListener('input',  actualizarSubtotal);
         cantidadInput.addEventListener('change', actualizarSubtotal);
     }
 </script>
-{% endblock %}
 
+{% endblock %}

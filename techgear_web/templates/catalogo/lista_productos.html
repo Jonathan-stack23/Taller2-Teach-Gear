@@ -1,37 +1,61 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{# ================================================================
+   CLASE 4 — Django Templates y Catálogo
+   lista_productos.html: Catálogo completo con filtros por categoría
+   Template Tags usados:
+     - {% for cat in categorias %}       iteración sobre categorías
+     - {% if categoria_actual == cat %}  comparación en condicional
+     - {{ productos|length }}            filtro de longitud
+     - {{ producto.precio|floatformat }} filtro de decimales
+     - {{ busqueda|urlencode }}          filtro de codificación URL
+     - {{ cat|urlencode }}               codificación de parámetro GET
+     - {% url %}                         resolución de rutas
+     - {% if forloop.first %}            variable especial del for
+================================================================ #}
 
 {% block title %}Catálogo de Productos - TechGear{% endblock %}
 
 {% block content %}
-<!-- Header del Catálogo -->
+
+{# ── HEADER DEL CATÁLOGO ────────────────────────────────────────── #}
 <div class="row align-items-center mb-4 g-3">
     <div class="col-md-7">
         <h1 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
             <i class="bi bi-grid-3x3-gap-fill text-primary"></i>Catálogo de Productos
         </h1>
-        <p class="text-muted mb-0">Explora nuestra amplia selección de hardware y componentes de alto rendimiento</p>
+        <p class="text-muted mb-0">
+            Explora nuestra amplia selección de hardware y componentes de alto rendimiento
+        </p>
     </div>
     <div class="col-md-5 text-md-end">
+        {# Filtro {{ |length }} para contar cuántos productos se devolvieron #}
         {% if productos %}
-            <span class="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 rounded-pill">
-                <i class="bi bi-box me-1"></i>{{ productos|length }} producto{{ productos|length|pluralize }} encontrado{{ productos|length|pluralize }}
+            <span class="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 rounded-pill badge-pulse">
+                <i class="bi bi-box me-1"></i>
+                {{ productos|length }} producto{{ productos|length|pluralize }} encontrado{{ productos|length|pluralize }}
             </span>
         {% endif %}
     </div>
 </div>
 
-<!-- Barra de Búsqueda y Filtros -->
+{# ── BARRA DE BÚSQUEDA Y FILTROS ────────────────────────────────── #}
 <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
     <div class="card-body p-4">
+
+        {# Formulario GET con búsqueda por texto — método GET para URLs amigables #}
         <form method="get" action="{% url 'catalogo:lista_productos' %}" class="row g-3 align-items-center">
             <div class="col-lg-8 col-md-7">
                 <div class="input-group">
                     <span class="input-group-text bg-light border-end-0 text-muted">
                         <i class="bi bi-search"></i>
                     </span>
-                    <input type="text" name="q" class="form-control border-start-0 bg-light"
+                    <input type="text" name="q"
+                           class="form-control border-start-0 bg-light"
                            placeholder="Buscar por nombre, marca, componente..."
                            value="{{ busqueda }}">
+                    {# Template Tag: {% if %} — mantenemos la categoría actual al buscar #}
                     {% if categoria_actual %}
                         <input type="hidden" name="categoria" value="{{ categoria_actual }}">
                     {% endif %}
@@ -41,26 +65,37 @@
                 <button type="submit" class="btn btn-primary w-100 fw-semibold">
                     <i class="bi bi-funnel me-1"></i>Filtrar
                 </button>
+                {# Botón limpiar solo si hay filtros activos #}
                 {% if busqueda or categoria_actual %}
-                    <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary px-3" title="Limpiar filtros">
+                    <a href="{% url 'catalogo:lista_productos' %}"
+                       class="btn btn-outline-secondary px-3" title="Limpiar filtros">
                         <i class="bi bi-x-lg"></i>
                     </a>
                 {% endif %}
             </div>
         </form>
 
+        {# ── CHIPS DE CATEGORÍAS ── #}
+        {# Template Tag: {% if categorias %} — mostrar filtros solo si hay categorías #}
         {% if categorias %}
             <hr class="my-3 text-secondary opacity-25">
             <div class="d-flex flex-wrap gap-2 align-items-center pt-1">
-                <span class="small fw-semibold text-muted me-2"><i class="bi bi-tags me-1"></i>Categorías:</span>
+                <span class="small fw-semibold text-muted me-1">
+                    <i class="bi bi-tags me-1"></i>Categorías:
+                </span>
+
+                {# Chip "Todas" activo cuando no hay categoria_actual #}
                 <a href="{% url 'catalogo:lista_productos' %}{% if busqueda %}?q={{ busqueda|urlencode }}{% endif %}"
-                   class="btn btn-sm {% if not categoria_actual %}btn-primary text-white{% else %}btn-outline-secondary{% endif %} rounded-pill px-3 py-1">
-                    Todas
+                   class="category-chip {% if not categoria_actual %}active{% endif %}">
+                    <i class="bi bi-grid"></i> Todas
                 </a>
+
+                {# Template Tag: {% for cat in categorias %} — iteración de categorías #}
                 {% for cat in categorias %}
+                    {# Template Tag: {% if categoria_actual == cat %} — chip activo #}
                     <a href="{% url 'catalogo:lista_productos' %}?categoria={{ cat|urlencode }}{% if busqueda %}&q={{ busqueda|urlencode }}{% endif %}"
-                       class="btn btn-sm {% if categoria_actual == cat %}btn-primary text-white{% else %}btn-outline-secondary{% endif %} rounded-pill px-3 py-1">
-                        {{ cat }}
+                       class="category-chip {% if categoria_actual == cat %}active{% endif %}">
+                        <i class="bi bi-tag"></i> {{ cat }}
                     </a>
                 {% endfor %}
             </div>
@@ -68,44 +103,71 @@
     </div>
 </div>
 
-<!-- Listado de Productos con Template Tags -->
+{# ── LISTADO DE PRODUCTOS CON TEMPLATE TAGS ─────────────────────── #}
+{# Template Tag: {% if productos %} / {% else %} — productos o estado vacío #}
 {% if productos %}
     <div class="row g-4">
+
+        {# Template Tag: {% for producto in productos %} — iteración principal del catálogo #}
         {% for producto in productos %}
             <div class="col-xl-3 col-lg-4 col-md-6">
                 <div class="card h-100 shadow-sm border-0 product-card rounded-4 overflow-hidden">
-                    <a href="{% url 'catalogo:detalle_producto' producto.id %}" class="text-decoration-none text-dark">
+
+                    <a href="{% url 'catalogo:detalle_producto' producto.id %}"
+                       class="text-decoration-none text-dark">
                         <div class="product-image-container bg-light p-4 text-center d-flex align-items-center justify-content-center position-relative">
+
+                            {# {% if producto.imagen_url %} — imagen real o ícono placeholder #}
                             {% if producto.imagen_url %}
-                                <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-fluid product-img">
+                                <img src="{{ producto.imagen_url }}"
+                                     alt="{{ producto.nombre }}"
+                                     class="img-fluid product-img">
                             {% else %}
                                 <i class="bi bi-cpu text-primary display-3 opacity-50"></i>
                             {% endif %}
+
+                            {# Badge de marca #}
                             {% if producto.marca %}
-                                <span class="position-absolute top-0 start-0 m-3 badge bg-dark bg-opacity-75 text-white fw-normal">
+                                <span class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 text-white fw-normal small">
                                     {{ producto.marca }}
+                                </span>
+                            {% endif %}
+
+                            {# Badge agotado #}
+                            {% if producto.stock == 0 %}
+                                <span class="position-absolute top-0 end-0 m-2 badge bg-danger small">
+                                    Agotado
                                 </span>
                             {% endif %}
                         </div>
                     </a>
+
                     <div class="card-body d-flex flex-column p-4">
                         <div class="mb-2">
                             <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1 small rounded-pill">
                                 {{ producto.categoria }}
                             </span>
                         </div>
+
                         <h5 class="card-title fw-bold text-dark mb-2">
-                            <a href="{% url 'catalogo:detalle_producto' producto.id %}" class="text-decoration-none text-dark hover-primary">
-                                {{ producto.nombre }}
+                            <a href="{% url 'catalogo:detalle_producto' producto.id %}"
+                               class="text-decoration-none text-dark hover-primary">
+                                {# Filtro |truncatechars — título máximo 45 caracteres #}
+                                {{ producto.nombre|truncatechars:45 }}
                             </a>
                         </h5>
+
                         <p class="card-text text-muted small mb-3 flex-grow-1 clamp-2">
                             {{ producto.descripcion }}
                         </p>
+
                         <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
                             <div>
                                 <span class="text-muted small d-block">Precio</span>
-                                <span class="h4 fw-bold text-primary mb-0">${{ producto.precio|floatformat:2 }}</span>
+                                {# Filtro |floatformat:2 — mostrar precio con 2 decimales #}
+                                <span class="h4 fw-bold text-primary mb-0">
+                                    ${{ producto.precio|floatformat:2 }}
+                                </span>
                             </div>
                             <div class="text-end">
                                 {% if producto.stock > 0 %}
@@ -120,30 +182,38 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
-                        <a href="{% url 'catalogo:detalle_producto' producto.id %}" class="btn btn-outline-primary w-100 fw-semibold rounded-3">
+                        <a href="{% url 'catalogo:detalle_producto' producto.id %}"
+                           class="btn btn-outline-primary w-100 fw-semibold rounded-3">
                             <i class="bi bi-eye me-1"></i>Ver Detalle
                         </a>
                     </div>
                 </div>
             </div>
+        {# fin del {% for %} #}
         {% endfor %}
     </div>
+
 {% else %}
+    {# Estado vacío — diferencia entre sin resultados de búsqueda vs catálogo vacío #}
     <div class="text-center py-5 bg-white rounded-4 border border-dashed shadow-sm my-4">
         <i class="bi bi-search display-3 text-muted mb-3 d-block opacity-50"></i>
         <h4 class="text-dark fw-bold mb-2">No se encontraron productos</h4>
         <p class="text-muted mb-4 max-w-md mx-auto">
+            {# Template Tag: {% if busqueda or categoria_actual %} — mensaje contextual #}
             {% if busqueda or categoria_actual %}
-                No hay resultados para los filtros seleccionados. Intenta con otros términos o elimina los filtros.
+                No hay resultados para los filtros seleccionados.
+                Intenta con otros términos o elimina los filtros.
             {% else %}
                 No hay productos disponibles en el catálogo en este momento.
             {% endif %}
         </p>
-        <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-primary px-4 py-2 fw-semibold rounded-pill">
+        <a href="{% url 'catalogo:lista_productos' %}"
+           class="btn btn-primary px-4 py-2 fw-semibold rounded-pill">
             <i class="bi bi-arrow-clockwise me-1"></i>Ver todos los productos
         </a>
     </div>
 {% endif %}
-{% endblock %}
 
+{% endblock %}

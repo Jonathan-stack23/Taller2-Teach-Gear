@@ -1,18 +1,28 @@
+/* ============================================================
+   TechGear — Custom Styles
+   Clase 4: Django Templates & Catálogo
+   Clase 5: Django Formularios & Pedidos
+   ============================================================ */
+
 :root {
     --bs-primary: #0d6efd;
     --bs-primary-rgb: 13, 110, 253;
     --tg-dark: #0f172a;
     --tg-surface: #ffffff;
     --tg-border: #e2e8f0;
+    --tg-gradient-start: #0d6efd;
+    --tg-gradient-mid: #1e40af;
+    --tg-gradient-end: #0369a1;
 }
 
+/* ── Base ── */
 body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     color: #1e293b;
     background-color: #f8fafc;
 }
 
-/* Hero section */
+/* ── Hero Section ── */
 .hero {
     position: relative;
     background: linear-gradient(135deg, #0d6efd 0%, #1e40af 60%, #0369a1 100%);
@@ -42,22 +52,85 @@ body {
     pointer-events: none;
 }
 
+/* ── Floating animation (hero icon) ── */
 @keyframes floatAnim {
-    0%, 100% {
-        transform: translateY(0px) rotate(0deg);
-    }
-    50% {
-        transform: translateY(-10px) rotate(2deg);
-    }
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50%       { transform: translateY(-12px) rotate(3deg); }
 }
 
 .floating-animation {
     animation: floatAnim 4s ease-in-out infinite;
 }
 
-/* Product cards */
+/* ── Fade-in-up for sections ── */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.5s ease forwards;
+}
+
+/* ── Stats / counter cards ── */
+.stat-card {
+    border-radius: 1rem;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    background: linear-gradient(135deg, #0d6efd 0%, #1e40af 100%);
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 1rem 2rem rgba(13, 110, 253, 0.25) !important;
+}
+
+.stat-card.success-grad {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.stat-card.info-grad {
+    background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+}
+
+.stat-card.warning-grad {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+}
+
+/* ── Category chips on home ── */
+.category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.2rem;
+    border-radius: 3rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+    border: 2px solid transparent;
+    background-color: #f1f5f9;
+    color: #334155;
+}
+
+.category-chip:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(13, 110, 253, 0.15);
+    background-color: #e0e7ff;
+    color: #1d4ed8;
+    border-color: #bfdbfe;
+}
+
+.category-chip.active {
+    background-color: #0d6efd;
+    color: #ffffff;
+    border-color: #0d6efd;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.35);
+}
+
+/* ── Product cards ── */
 .product-card {
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+                box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     background-color: #ffffff;
 }
 
@@ -93,7 +166,7 @@ body {
     overflow: hidden;
 }
 
-/* Feature cards */
+/* ── Feature cards (benefits row) ── */
 .feature-card {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -108,7 +181,7 @@ body {
     height: 64px;
 }
 
-/* Order cards */
+/* ── Order cards (lista_pedidos) ── */
 .order-card {
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
     border: 1px solid #f1f5f9 !important;
@@ -119,41 +192,153 @@ body {
     box-shadow: 0 0.5rem 1.25rem rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Form controls */
-.form-control:focus, .form-select:focus {
+/* ── Order status timeline (detalle_pedido) ── */
+.timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0.5rem;
+    bottom: 0.5rem;
+    width: 2px;
+    background: #e2e8f0;
+}
+
+.timeline-item {
+    position: relative;
+    padding-bottom: 1.5rem;
+}
+
+.timeline-item:last-child {
+    padding-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.2rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: #cbd5e1;
+    border: 2px solid #fff;
+    box-shadow: 0 0 0 2px #e2e8f0;
+}
+
+.timeline-dot.active {
+    background: #0d6efd;
+    box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
+}
+
+.timeline-dot.done {
+    background: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+}
+
+/* ── Step indicator (crear_pedido checkout) ── */
+.checkout-steps {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 2rem;
+}
+
+.checkout-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    position: relative;
+}
+
+.checkout-step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 1rem;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: #e2e8f0;
+    z-index: 0;
+}
+
+.step-circle {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: #e2e8f0;
+    color: #94a3b8;
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+    transition: background 0.3s ease;
+}
+
+.checkout-step.active .step-circle {
+    background: #0d6efd;
+    color: #fff;
+    box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.2);
+}
+
+.checkout-step.done .step-circle {
+    background: #059669;
+    color: #fff;
+}
+
+.step-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #94a3b8;
+    margin-top: 0.35rem;
+}
+
+.checkout-step.active .step-label {
+    color: #0d6efd;
+}
+
+.checkout-step.done .step-label {
+    color: #059669;
+}
+
+/* ── Form controls ── */
+.form-control:focus,
+.form-select:focus {
     border-color: #3b82f6;
     box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15) !important;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar {
-    width: 7px;
-    height: 7px;
-}
+/* ── Scrollbars ── */
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track  { background: #f1f5f9; }
+::-webkit-scrollbar-thumb  { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-::-webkit-scrollbar-track {
-    background: #f1f5f9;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #cbd5e1;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8;
-}
-
+/* ── Utilities ── */
 .border-dashed {
     border-style: dashed !important;
     border-width: 2px !important;
 }
 
-.max-w-md {
-    max-width: 480px;
+.max-w-md { max-width: 480px; }
+
+.fw-extrabold { font-weight: 800; }
+
+.letter-spacing-1 { letter-spacing: 0.08em; }
+
+/* ── Pulse badge animation ── */
+@keyframes pulse-badge {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4); }
+    50%       { box-shadow: 0 0 0 6px rgba(13, 110, 253, 0); }
 }
 
-.fw-extrabold {
-    font-weight: 800;
+.badge-pulse {
+    animation: pulse-badge 2s ease-in-out infinite;
 }
-

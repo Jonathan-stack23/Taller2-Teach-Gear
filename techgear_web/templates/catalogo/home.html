@@ -1,25 +1,50 @@
 {% extends 'base.html' %}
 {% load static %}
 
+{# ================================================================
+   CLASE 4 — Django Templates y Catálogo
+   home.html: Página principal de TechGear
+   Template Tags usados:
+     - {% extends %}       herencia de plantillas
+     - {% block %}         bloques sobreescribibles
+     - {% load static %}   cargar archivos estáticos
+     - {% url %}           resolución de URLs por nombre
+     - {% for %}           iteración sobre listas
+     - {% if / elif %}     condicionales
+     - {% with %}          asignación de variables temporales
+     - {{ variable }}      renderizado de variables
+     - |floatformat:2      filtro: formato de decimales
+     - |truncatechars:50   filtro: truncar texto
+     - |length             filtro: longitud de lista
+     - |default            filtro: valor por defecto
+================================================================ #}
+
 {% block title %}TechGear - Hardware y Componentes de Vanguardia{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
+
+{# ── HERO SECTION ─────────────────────────────────────────────── #}
 <section class="hero bg-gradient text-white rounded-4 p-4 p-md-5 mb-5 shadow position-relative overflow-hidden">
     <div class="row align-items-center position-relative" style="z-index: 2;">
         <div class="col-lg-7">
             <span class="badge bg-white bg-opacity-25 text-white mb-3 px-3 py-2 rounded-pill fw-semibold">
                 <i class="bi bi-lightning-charge-fill me-1 text-warning"></i>Rendimiento Extremo
             </span>
-            <h1 class="display-4 fw-extrabold mb-3 text-white">Hardware y Componentes para Verdaderos Gamers</h1>
+            <h1 class="display-4 fw-extrabold mb-3 text-white">
+                Hardware y Componentes para Verdaderos Gamers
+            </h1>
             <p class="lead mb-4 opacity-90 text-light">
-                Descubre los mejores procesadores, tarjetas gráficas, laptops profesionales y periféricos de última generación con garantía oficial.
+                Descubre los mejores procesadores, tarjetas gráficas, laptops profesionales
+                y periféricos de última generación con garantía oficial.
             </p>
             <div class="d-flex flex-wrap gap-3">
-                <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-light btn-lg px-4 py-3 fw-bold text-primary rounded-pill shadow-sm">
+                {# Template Tag: {% url %} — genera la URL a partir del nombre de vista #}
+                <a href="{% url 'catalogo:lista_productos' %}"
+                   class="btn btn-light btn-lg px-4 py-3 fw-bold text-primary rounded-pill shadow-sm">
                     <i class="bi bi-grid-fill me-2"></i>Ver Catálogo Completo
                 </a>
-                <a href="{% url 'catalogo:lista_pedidos' %}" class="btn btn-outline-light btn-lg px-4 py-3 fw-semibold rounded-pill">
+                <a href="{% url 'catalogo:lista_pedidos' %}"
+                   class="btn btn-outline-light btn-lg px-4 py-3 fw-semibold rounded-pill">
                     <i class="bi bi-box-seam me-2"></i>Rastrear Pedido
                 </a>
             </div>
@@ -32,75 +57,144 @@
     </div>
 </section>
 
-<!-- Error de API si ocurre -->
+{# ── ERROR DE API ──────────────────────────────────────────────── #}
+{# Template Tag: {% if api_error %} — condicional para mostrar error #}
 {% if api_error %}
     <div class="alert alert-warning border-0 shadow-sm rounded-4 mb-5 p-4" role="alert">
         <div class="d-flex align-items-center gap-3">
             <i class="bi bi-exclamation-triangle-fill fs-2 text-warning"></i>
             <div>
-                <h5 class="alert-heading fw-bold mb-1">Servicio de Catálogo Temporalmente No Disponible</h5>
+                <h5 class="alert-heading fw-bold mb-1">Servicio de Catálogo No Disponible</h5>
                 <p class="mb-0 small text-muted">
-                    No pudimos conectar con la API de productos (<code>{{ api_error }}</code>).
-                    Verifica que el servicio FastAPI esté activo.
+                    No se pudo conectar con la API: <code>{{ api_error }}</code>.
+                    Verifica que el servicio FastAPI esté activo en tu entorno.
                 </p>
             </div>
         </div>
     </div>
 {% endif %}
 
-<!-- Sección de Productos Destacados -->
+{# ── ESTADÍSTICAS ─────────────────────────────────────────────── #}
+{# Template Tag: {{ productos_destacados|length }} — filtro de longitud #}
+{% if productos_destacados %}
+<section class="row g-3 mb-5 fade-in-up">
+    <div class="col-6 col-md-3">
+        <div class="stat-card text-white p-3 p-md-4 text-center shadow-sm h-100">
+            <i class="bi bi-box-seam fs-2 mb-2 d-block opacity-75"></i>
+            <div class="h3 fw-extrabold mb-0">{{ productos_destacados|length }}+</div>
+            <div class="small opacity-75">Productos Destacados</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card success-grad text-white p-3 p-md-4 text-center shadow-sm h-100">
+            <i class="bi bi-truck fs-2 mb-2 d-block opacity-75"></i>
+            <div class="h3 fw-extrabold mb-0">24h</div>
+            <div class="small opacity-75">Envío Express</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card info-grad text-white p-3 p-md-4 text-center shadow-sm h-100">
+            <i class="bi bi-shield-check fs-2 mb-2 d-block opacity-75"></i>
+            <div class="h3 fw-extrabold mb-0">100%</div>
+            <div class="small opacity-75">Garantía Oficial</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card warning-grad text-white p-3 p-md-4 text-center shadow-sm h-100">
+            <i class="bi bi-headset fs-2 mb-2 d-block opacity-75"></i>
+            <div class="h3 fw-extrabold mb-0">7/7</div>
+            <div class="small opacity-75">Soporte Técnico</div>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{# ── PRODUCTOS DESTACADOS ──────────────────────────────────────── #}
 <section class="mb-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h2 class="fw-bold mb-1 text-dark d-flex align-items-center gap-2">
                 <i class="bi bi-stars text-warning"></i>Productos Destacados
             </h2>
-            <p class="text-muted mb-0 small">Lo más vendido y recomendado de nuestra tienda</p>
+            <p class="text-muted mb-0 small">
+                Lo más vendido y recomendado de nuestra tienda
+            </p>
         </div>
-        <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+        <a href="{% url 'catalogo:lista_productos' %}"
+           class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
             Ver todos <i class="bi bi-arrow-right ms-1"></i>
         </a>
     </div>
 
+    {# Template Tag: {% if %} / {% else %} — condicional lista de productos #}
     {% if productos_destacados %}
         <div class="row g-4">
+
+            {# Template Tag: {% for producto in productos_destacados %} — iteración #}
             {% for producto in productos_destacados %}
                 <div class="col-lg-4 col-md-6">
                     <div class="card h-100 shadow-sm border-0 product-card rounded-4 overflow-hidden">
-                        <a href="{% url 'catalogo:detalle_producto' producto.id %}" class="text-decoration-none text-dark">
+
+                        {# Enlace a detalle con {% url %} y variable de producto #}
+                        <a href="{% url 'catalogo:detalle_producto' producto.id %}"
+                           class="text-decoration-none text-dark">
                             <div class="product-image-container bg-light p-4 text-center d-flex align-items-center justify-content-center position-relative">
+
+                                {# Template Tag: {% if producto.imagen_url %} — imagen o ícono placeholder #}
                                 {% if producto.imagen_url %}
-                                    <img src="{{ producto.imagen_url }}" alt="{{ producto.nombre }}" class="img-fluid product-img">
+                                    <img src="{{ producto.imagen_url }}"
+                                         alt="{{ producto.nombre }}"
+                                         class="img-fluid product-img">
                                 {% else %}
                                     <i class="bi bi-box text-primary display-3 opacity-50"></i>
                                 {% endif %}
+
+                                {# Template Tag: {% if producto.marca %} — badge de marca #}
                                 {% if producto.marca %}
                                     <span class="position-absolute top-0 start-0 m-3 badge bg-dark bg-opacity-75 text-white fw-normal">
                                         {{ producto.marca }}
                                     </span>
                                 {% endif %}
+
+                                {# Badge "Agotado" con {% if %} #}
+                                {% if producto.stock == 0 %}
+                                    <span class="position-absolute top-0 end-0 m-3 badge bg-danger">
+                                        Agotado
+                                    </span>
+                                {% endif %}
                             </div>
                         </a>
+
                         <div class="card-body d-flex flex-column p-4">
                             <div class="mb-2">
+                                {# Filtro: {{ producto.categoria|default:"Sin categoría" }} #}
                                 <span class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1 small rounded-pill">
-                                    {{ producto.categoria }}
+                                    {{ producto.categoria|default:"General" }}
                                 </span>
                             </div>
+
                             <h5 class="card-title fw-bold text-dark mb-2">
-                                <a href="{% url 'catalogo:detalle_producto' producto.id %}" class="text-decoration-none text-dark hover-primary">
-                                    {{ producto.nombre }}
+                                <a href="{% url 'catalogo:detalle_producto' producto.id %}"
+                                   class="text-decoration-none text-dark hover-primary">
+                                    {# Filtro: |truncatechars — limita longitud del título #}
+                                    {{ producto.nombre|truncatechars:50 }}
                                 </a>
                             </h5>
+
                             <p class="card-text text-muted small mb-3 flex-grow-1 clamp-2">
                                 {{ producto.descripcion }}
                             </p>
+
                             <div class="d-flex justify-content-between align-items-center mt-auto pt-3 border-top">
                                 <div>
                                     <span class="text-muted small d-block">Precio</span>
-                                    <span class="h4 fw-bold text-primary mb-0">${{ producto.precio|floatformat:2 }}</span>
+                                    {# Filtro: |floatformat:2 — formatea con 2 decimales #}
+                                    <span class="h4 fw-bold text-primary mb-0">
+                                        ${{ producto.precio|floatformat:2 }}
+                                    </span>
                                 </div>
                                 <div class="text-end">
+                                    {# Condicional de stock #}
                                     {% if producto.stock > 0 %}
                                         <span class="badge bg-success bg-opacity-10 text-success small rounded-pill px-2 py-1">
                                             <i class="bi bi-check-circle me-1"></i>{{ producto.stock }} disp.
@@ -113,16 +207,20 @@
                                 </div>
                             </div>
                         </div>
+
                         <div class="card-footer bg-transparent border-0 px-4 pb-4 pt-0">
-                            <a href="{% url 'catalogo:detalle_producto' producto.id %}" class="btn btn-outline-primary w-100 fw-semibold rounded-3">
+                            <a href="{% url 'catalogo:detalle_producto' producto.id %}"
+                               class="btn btn-outline-primary w-100 fw-semibold rounded-3">
                                 <i class="bi bi-eye me-1"></i>Ver Detalle
                             </a>
                         </div>
                     </div>
                 </div>
+            {# Template Tag: {% endfor %} — fin del ciclo #}
             {% endfor %}
         </div>
     {% else %}
+        {# Estado vacío cuando no hay productos en la API #}
         <div class="text-center py-5 bg-white rounded-4 border border-dashed shadow-sm">
             <i class="bi bi-inbox display-4 text-muted mb-3 d-block opacity-50"></i>
             <h4 class="text-muted fw-bold">No hay productos disponibles</h4>
@@ -131,7 +229,7 @@
     {% endif %}
 </section>
 
-<!-- Beneficios -->
+{# ── BENEFICIOS ────────────────────────────────────────────────── #}
 <section class="row g-4 mb-4">
     <div class="col-md-4">
         <div class="card h-100 border-0 shadow-sm bg-white rounded-4 p-4 text-center feature-card">
@@ -139,7 +237,9 @@
                 <i class="bi bi-shield-check fs-2"></i>
             </div>
             <h5 class="fw-bold text-dark">Garantía Oficial</h5>
-            <p class="text-muted small mb-0">100% de productos originales con garantía directa del fabricante.</p>
+            <p class="text-muted small mb-0">
+                100% de productos originales con garantía directa del fabricante.
+            </p>
         </div>
     </div>
     <div class="col-md-4">
@@ -148,7 +248,9 @@
                 <i class="bi bi-truck fs-2"></i>
             </div>
             <h5 class="fw-bold text-dark">Envío Nacional Rápido</h5>
-            <p class="text-muted small mb-0">Despachos seguros y seguimiento en tiempo real de tu pedido.</p>
+            <p class="text-muted small mb-0">
+                Despachos seguros y seguimiento en tiempo real de tu pedido.
+            </p>
         </div>
     </div>
     <div class="col-md-4">
@@ -157,9 +259,11 @@
                 <i class="bi bi-headset fs-2"></i>
             </div>
             <h5 class="fw-bold text-dark">Soporte Especializado</h5>
-            <p class="text-muted small mb-0">Asesoría técnica para armar y configurar tus componentes.</p>
+            <p class="text-muted small mb-0">
+                Asesoría técnica para armar y configurar tus componentes.
+            </p>
         </div>
     </div>
 </section>
-{% endblock %}
 
+{% endblock %}

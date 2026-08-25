@@ -1,13 +1,34 @@
 {% extends 'base.html' %}
+{% load static %}
+
+{# ================================================================
+   CLASE 5 — Django Formularios y Pedidos
+   lista_pedidos.html: Historial de pedidos por email del cliente
+   Permite buscar pedidos por correo electrónico (método GET).
+   Template Tags:
+     - {% for pedido in pedidos %}    iteración de pedidos
+     - {% with estado=pedido.estado %} asignación temporal
+     - {{ pedido.id|slice:":12" }}    filtro de corte de ID
+     - {{ pedido.fecha_creacion|slice:":10" }} fecha corta
+     - {{ pedido.total|floatformat:2 }} precio formateado
+     - {% if email_busqueda %}         condicional de búsqueda activa
+================================================================ #}
 
 {% block title %}Mis Pedidos - TechGear{% endblock %}
 
 {% block content %}
-<!-- Breadcrumb -->
+
+{# ── BREADCRUMB ─────────────────────────────────────────────────── #}
 <nav aria-label="breadcrumb" class="mb-4">
     <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm mb-0">
-        <li class="breadcrumb-item"><a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted"><i class="bi bi-house me-1"></i>Inicio</a></li>
-        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">Mis Pedidos</li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted">
+                <i class="bi bi-house me-1"></i>Inicio
+            </a>
+        </li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+            Mis Pedidos
+        </li>
     </ol>
 </nav>
 
@@ -16,21 +37,38 @@
         <h1 class="fw-bold text-dark mb-1 d-flex align-items-center gap-2">
             <i class="bi bi-box-seam-fill text-primary"></i>Historial de Pedidos
         </h1>
-        <p class="text-muted mb-0">Consulta el estado, detalles y productos de tus compras en tiempo real</p>
+        <p class="text-muted mb-0">
+            Consulta el estado, detalles y productos de tus compras en tiempo real
+        </p>
     </div>
+    {# Mostrar cantidad de resultados si hay búsqueda activa #}
+    {% if email_busqueda and pedidos %}
+        <div class="col-md-5 text-md-end">
+            <span class="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 rounded-pill">
+                <i class="bi bi-receipt me-1"></i>
+                {{ pedidos|length }} pedido{{ pedidos|length|pluralize }}
+            </span>
+        </div>
+    {% endif %}
 </div>
 
-<!-- Buscador por Email -->
+{# ── BUSCADOR POR EMAIL ─────────────────────────────────────────── #}
+{# Formulario GET — la búsqueda va por parámetro en la URL (?email=…) #}
 <div class="card border-0 shadow-sm bg-white rounded-4 mb-4">
     <div class="card-body p-4">
         <form method="get" class="row g-3 align-items-end">
             <div class="col-md-9">
-                <label for="email" class="form-label fw-semibold text-dark small">Buscar pedidos por correo electrónico del cliente:</label>
+                <label for="email" class="form-label fw-semibold text-dark small">
+                    <i class="bi bi-search me-1 text-primary"></i>
+                    Buscar pedidos por correo electrónico del cliente:
+                </label>
                 <div class="input-group input-group-lg">
                     <span class="input-group-text bg-light border-end-0 text-muted">
                         <i class="bi bi-envelope"></i>
                     </span>
-                    <input type="email" id="email" name="email"
+                    <input type="email"
+                           id="email"
+                           name="email"
                            class="form-control border-start-0 bg-light"
                            value="{{ email_busqueda }}"
                            placeholder="Ingresa tu correo (ej: cliente@ejemplo.com)">
@@ -41,7 +79,9 @@
                     <i class="bi bi-search me-1"></i>Consultar
                 </button>
                 {% if email_busqueda %}
-                    <a href="{% url 'catalogo:lista_pedidos' %}" class="btn btn-outline-secondary btn-lg px-3 rounded-3" title="Limpiar filtro">
+                    <a href="{% url 'catalogo:lista_pedidos' %}"
+                       class="btn btn-outline-secondary btn-lg px-3 rounded-3"
+                       title="Limpiar filtro">
                         <i class="bi bi-x-lg"></i>
                     </a>
                 {% endif %}
@@ -50,21 +90,30 @@
     </div>
 </div>
 
-<!-- Listado de Pedidos -->
+{# ── LISTADO DE PEDIDOS ─────────────────────────────────────────── #}
+{# Template Tag: {% if pedidos %} / {% else %} #}
 {% if pedidos %}
     <div class="row g-4">
+
+        {# Template Tag: {% for pedido in pedidos %} — iteración de pedidos desde la API #}
         {% for pedido in pedidos %}
             <div class="col-xl-6">
                 <div class="card border-0 shadow-sm bg-white rounded-4 h-100 order-card">
+
+                    {# Cabecera con ID y estado #}
                     <div class="card-header bg-light border-0 py-3 px-4 d-flex justify-content-between align-items-center rounded-top-4">
                         <div class="d-flex align-items-center gap-2">
                             <i class="bi bi-receipt text-primary fs-5"></i>
                             <div>
                                 <small class="text-muted d-block" style="font-size: 0.75rem;">NÚMERO DE ORDEN</small>
+                                {# Filtro |slice para mostrar los primeros 12 caracteres del ID MongoDB #}
                                 <code class="fw-bold text-dark">#{{ pedido.id|slice:":12" }}</code>
                             </div>
                         </div>
+
+                        {# Template Tag: {% with estado=pedido.estado %} — variable temporal #}
                         {% with estado=pedido.estado %}
+                            {# Badges de estado con colores semánticos usando {% if/elif/else %} #}
                             {% if estado == 'pendiente' %}
                                 <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 fw-semibold rounded-pill">
                                     <i class="bi bi-clock me-1"></i>Pendiente
@@ -90,6 +139,7 @@
                             {% endif %}
                         {% endwith %}
                     </div>
+
                     <div class="card-body p-4">
                         <div class="row g-3 mb-3">
                             <div class="col-sm-6">
@@ -101,51 +151,72 @@
                                 <div class="text-dark text-truncate">{{ pedido.cliente_email }}</div>
                             </div>
                         </div>
+
+                        {# Items del pedido — IDs de productos y cantidades #}
                         <div class="mb-3">
-                            <small class="text-muted d-block small mb-1">Productos en el pedido ({{ pedido.items|length }} ítem{{ pedido.items|length|pluralize }}):</small>
+                            <small class="text-muted d-block small mb-1">
+                                Productos ({{ pedido.items|length }} ítem{{ pedido.items|length|pluralize }}):
+                            </small>
                             <div class="d-flex flex-wrap gap-1">
+                                {# {% for item in pedido.items %} — sub-iteración de items #}
                                 {% for item in pedido.items %}
                                     <span class="badge bg-light text-dark border small px-2 py-1">
-                                        <i class="bi bi-box me-1 text-primary"></i>{{ item.cantidad }} un. × #{{ item.producto_id|slice:":8" }}
+                                        <i class="bi bi-box me-1 text-primary"></i>
+                                        {{ item.cantidad }} un. × #{{ item.producto_id|slice:":8" }}
                                     </span>
                                 {% endfor %}
                             </div>
                         </div>
+
                         <div class="d-flex justify-content-between align-items-center pt-3 border-top mt-3">
                             <div>
                                 <small class="text-muted d-block" style="font-size: 0.75rem;">TOTAL</small>
-                                <div class="h5 fw-bold text-primary mb-0">${{ pedido.total|floatformat:2 }}</div>
+                                <div class="h5 fw-bold text-primary mb-0">
+                                    ${{ pedido.total|floatformat:2 }}
+                                </div>
                             </div>
                             <div class="text-center">
                                 <small class="text-muted d-block" style="font-size: 0.75rem;">FECHA</small>
+                                {# Filtro |slice:":10" — muestra solo YYYY-MM-DD de la fecha ISO #}
                                 <div class="text-dark small">{{ pedido.fecha_creacion|slice:":10" }}</div>
                             </div>
-                            <a href="{% url 'catalogo:detalle_pedido' pedido.id %}" class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
+                            <a href="{% url 'catalogo:detalle_pedido' pedido.id %}"
+                               class="btn btn-outline-primary btn-sm rounded-pill px-3 fw-semibold">
                                 <i class="bi bi-eye me-1"></i>Ver Detalle
                             </a>
                         </div>
                     </div>
                 </div>
             </div>
+        {# fin {% for pedido in pedidos %} #}
         {% endfor %}
     </div>
+
 {% else %}
+    {# Estado vacío — mensaje contextual según si hay búsqueda activa o no #}
     <div class="text-center py-5 bg-white rounded-4 border border-dashed shadow-sm">
         <i class="bi bi-inboxes display-3 text-muted mb-3 d-block opacity-50"></i>
         <h4 class="text-dark fw-bold mb-2">
-            {% if email_busqueda %}No se encontraron pedidos para este correo{% else %}Consulta tus pedidos registrados{% endif %}
+            {# Template Tag: {% if email_busqueda %} — mensaje personalizado #}
+            {% if email_busqueda %}
+                No se encontraron pedidos para este correo
+            {% else %}
+                Consulta tus pedidos registrados
+            {% endif %}
         </h4>
         <p class="text-muted mb-4 max-w-md mx-auto">
             {% if email_busqueda %}
-                No hay registros con el correo <code>{{ email_busqueda }}</code>. Verifica la dirección o realiza un nuevo pedido.
+                No hay registros con el correo <code>{{ email_busqueda }}</code>.
+                Verifica la dirección o realiza un nuevo pedido.
             {% else %}
-                Ingresa tu correo electrónico en el campo superior o explora nuestro catálogo para realizar tu primera compra.
+                Ingresa tu correo electrónico arriba o explora el catálogo para realizar tu primera compra.
             {% endif %}
         </p>
-        <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-primary px-4 py-2 fw-semibold rounded-pill shadow-sm">
+        <a href="{% url 'catalogo:lista_productos' %}"
+           class="btn btn-primary px-4 py-2 fw-semibold rounded-pill shadow-sm">
             <i class="bi bi-shop me-1"></i>Explorar Catálogo de Productos
         </a>
     </div>
 {% endif %}
-{% endblock %}
 
+{% endblock %}
