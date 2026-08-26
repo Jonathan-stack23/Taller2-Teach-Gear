@@ -1,18 +1,20 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{# ================================================================
+{% comment %}
+================================================================
    CLASE 5 — Django Formularios y Pedidos
    lista_pedidos.html: Historial de pedidos por email del cliente
    Permite buscar pedidos por correo electrónico (método GET).
    Template Tags:
-     - {% for pedido in pedidos %}    iteración de pedidos
-     - {% with estado=pedido.estado %} asignación temporal
-     - {{ pedido.id|slice:":12" }}    filtro de corte de ID
-     - {{ pedido.fecha_creacion|slice:":10" }} fecha corta
-     - {{ pedido.total|floatformat:2 }} precio formateado
-     - {% if email_busqueda %}         condicional de búsqueda activa
-================================================================ #}
+     - for pedido in pedidos    iteración de pedidos
+     - with estado=pedido.estado asignación temporal
+     - pedido.id|slice:":12"    filtro de corte de ID
+     - pedido.fecha_creacion|slice:":10" fecha corta
+     - pedido.total|floatformat:2 precio formateado
+     - if email_busqueda         condicional de búsqueda activa
+================================================================
+{% endcomment %}
 
 {% block title %}Mis Pedidos - TechGear{% endblock %}
 

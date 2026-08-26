@@ -1,23 +1,25 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{# ================================================================
+{% comment %}
+================================================================
    CLASE 5 — Django Formularios y Pedidos
    detalle_pedido.html: Confirmación del pedido creado en FastAPI
    Esta vista se muestra DESPUÉS de que el formulario POST
    de crear_pedido fue enviado exitosamente a la API FastAPI.
    
    Template Tags usados:
-     - {{ pedido.id|slice:":12" }}          filtro: ID corto
-     - {{ pedido.fecha_creacion|slice:"…" }} filtro: fecha/hora
-     - {% with estado=pedido.estado %}       asignación temporal
-     - {% if/elif/else %}                    condicionales de estado
-     - {% for item in pedido.items %}        iteración de items
-     - {{ item.precio_unitario|floatformat:2 }} precio formateado
-     - {{ pedido.total|floatformat:2 }}      total del pedido
-     - {% if pedido.notas %}                 campo opcional
-     - {% url %}                             resolución de rutas
-================================================================ #}
+     - pedido.id|slice:":12"          filtro: ID corto
+     - pedido.fecha_creacion|slice    filtro: fecha/hora
+     - with estado=pedido.estado      asignación temporal
+     - if/elif/else                   condicionales de estado
+     - for item in pedido.items       iteración de items
+     - item.precio_unitario|floatformat:2 precio formateado
+     - pedido.total|floatformat:2     total del pedido
+     - if pedido.notas                campo opcional
+     - url                            resolución de rutas
+================================================================
+{% endcomment %}
 
 {% block title %}Pedido #{{ pedido.id|slice:":8" }} - TechGear{% endblock %}
 

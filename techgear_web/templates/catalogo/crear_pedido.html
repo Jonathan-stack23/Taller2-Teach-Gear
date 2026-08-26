@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{# ================================================================
+{% comment %}
+================================================================
    CLASE 5 — Django Formularios y Pedidos
    crear_pedido.html: Vista "Checkout" — Captura de datos del cliente
    Flujo:
@@ -13,13 +14,14 @@
      6. Django redirige al detalle del pedido creado
 
    Template Tags usados:
-     - {% csrf_token %}          token de seguridad requerido en todo POST
-     - {% for item in carrito %} iteración del carrito (almacenado en sesión)
-     - {{ carrito|length }}      longitud de la lista del carrito
-     - {{ total|floatformat:2 }} filtro de formato de precio
-     - {% if carrito %}          condicional para mostrar/ocultar formulario
-     - {% url %}                 resolución de rutas nombradas
-================================================================ #}
+     - csrf_token          token de seguridad requerido en todo POST
+     - for item in carrito iteracion del carrito (almacenado en sesion)
+     - carrito|length      longitud de la lista del carrito
+     - total|floatformat:2 filtro de formato de precio
+     - if carrito          condicional para mostrar/ocultar formulario
+     - url                 resolucion de rutas nombradas
+================================================================
+{% endcomment %}
 
 {% block title %}Finalizar Compra - TechGear{% endblock %}
 
@@ -80,22 +82,18 @@
 </div>
 {% endif %}
 
-{# ================================================================
-   CLASE 5 — FORMULARIO PRINCIPAL CON MÉTODO POST
-   El <form> envuelve AMBAS columnas para que el botón en el resumen
-   también dispare el submit al mismo endpoint.
-================================================================ #}
+{% comment %}
+CLASE 5 - FORMULARIO PRINCIPAL CON METODO POST
+El form envuelve AMBAS columnas para que el boton en el resumen
+tambien dispare el submit al mismo endpoint.
+{% endcomment %}
 
 {% if carrito %}
 
 {# Template Tag: {% if carrito %} — mostrar formulario solo si hay items en sesión #}
 
 <form method="post" id="pedido-form">
-    {# ── Template Tag: {% csrf_token %} ──────────────────────────
-       Obligatorio en TODOS los formularios POST de Django.
-       Genera un campo oculto con el token CSRF para proteger
-       contra ataques Cross-Site Request Forgery.
-    ── #}
+    {# csrf_token: Obligatorio en TODOS los formularios POST de Django. Protege contra CSRF. #}
     {% csrf_token %}
 
     <div class="row g-4 g-lg-5">
