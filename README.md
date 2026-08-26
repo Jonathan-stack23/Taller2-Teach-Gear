@@ -209,26 +209,168 @@ python manage.py runserver 8001
 
 ---
 
-## 📝 Plan de Desarrollo y Commits Sugeridos
+## 📝 Clases 4, 5 y 6 — Desarrollo Frontend y Entrega Final
 
-Usa estos mensajes de commit para evidenciar progreso por clase:
+### 🖼️ Clase 4 — Django: Templates y Catálogo
 
-**Clase 1 (Entorno y Arquitectura):**
-```bash
-git init
-git add .
-git commit -m "feat: estructura inicial techgear_api + techgear_web"
-git commit -m "feat: esquemas Pydantic Producto y Pedido + conexión MongoDB"
-git commit -m "chore: requirements.txt y variables de entorno"
+**Objetivo:** Construcción de las plantillas HTML del Frontend usando Django Template Tags para iterar y renderizar los datos de la API.
+
+**Archivos implementados:**
+
+| Template | Descripción |
+|----------|-------------|
+| `base.html` | Plantilla base con navbar, footer y bloque de mensajes |
+| `catalogo/home.html` | Hero section + productos destacados + estadísticas |
+| `catalogo/lista_productos.html` | Grid de productos con filtros por categoría y búsqueda |
+| `catalogo/detalle_producto.html` | Vista detallada + formulario de agregar al carrito |
+
+**Template Tags utilizados:**
+```django
+{% extends 'base.html' %}              {# Herencia de plantillas #}
+{% block content %}                    {# Bloques sobreescribibles #}
+{% load static %}                      {# Archivos estáticos #}
+{% url 'catalogo:home' %}              {# Resolución de URLs por nombre #}
+{% for producto in productos %}        {# Iteración sobre listas de la API #}
+{% if producto.stock == 0 %}           {# Condicional: badge Agotado #}
+{% with estado=pedido.estado %}        {# Asignación de variables temporales #}
+{{ producto.precio|floatformat:2 }}    {# Filtro: decimales #}
+{{ producto.nombre|truncatechars:50 }} {# Filtro: truncar texto #}
+{{ carrito|length }}                   {# Filtro: longitud de lista #}
+{{ producto.categoria|default:"General" }} {# Filtro: valor por defecto #}
 ```
 
-**Clase 2 (API REST y Swagger UI):**
+**Commit:**
 ```bash
-git commit -m "feat: endpoints CRUD de productos en FastAPI"
-git commit -m "feat: endpoint de creación y consulta de pedidos"
-git commit -m "feat: validación de stock y cálculo de total en pedidos"
-git commit -m "docs: README con instrucciones de instalación"
-git push -u origin main
+git add .
+git commit -m "feat(clase4): templates HTML del catálogo con Django Template Tags"
+git push origin main
+```
+
+---
+
+### 🛒 Clase 5 — Django: Formularios y Pedidos
+
+**Objetivo:** Creación de la vista "Checkout". Captura de datos del cliente mediante un formulario HTML y envío POST hacia el endpoint en FastAPI.
+
+**Flujo de checkout:**
+```
+1. Usuario navega al catálogo  (lista_productos.html)
+2. Entra al detalle del producto (detalle_producto.html)
+3. POST → agrega al carrito  (session['carrito'])
+4. Va al checkout  (crear_pedido.html) con su formulario
+5. Completa datos y hace clic en "Confirmar"
+6. Django POST → api_client.crear_pedido() → FastAPI /pedidos
+7. FastAPI valida stock, calcula total, guarda en MongoDB
+8. Django redirige a detalle_pedido.html con confirmación
+```
+
+**Formulario de checkout (`crear_pedido.html`):**
+```html
+<form method="post" id="pedido-form">
+    {% csrf_token %}   {# Obligatorio en todo POST de Django #}
+    <input name="cliente_nombre" required>
+    <input name="cliente_email" type="email" required>
+    <input name="cliente_telefono" type="tel">
+    <textarea name="direccion_envio" required></textarea>
+    <textarea name="notas"></textarea>
+    <button type="submit">Confirmar y Enviar Pedido</button>
+</form>
+```
+
+**Archivos implementados:**
+
+| Archivo | Descripción |
+|---------|-------------|
+| `catalogo/crear_pedido.html` | Checkout con resumen de carrito y formulario de cliente |
+| `catalogo/detalle_pedido.html` | Confirmación con timeline de estados y desglose de items |
+| `catalogo/lista_pedidos.html` | Búsqueda de pedidos por correo electrónico |
+| `catalogo/views.py` → `crear_pedido()` | Vista que procesa el POST y llama a FastAPI |
+
+**Commit:**
+```bash
+git add .
+git commit -m "feat(clase5): flujo completo de creación de pedidos con formulario POST"
+git push origin main
+```
+
+---
+
+### 🛡️ Clase 6 — Refinamiento y Entrega Final
+
+**Objetivo:** Manejo de excepciones, revisión del flujo completo y documentación final.
+
+**Escenarios de excepción manejados:**
+
+| Excepción | Comportamiento |
+|-----------|----------------|
+| API caída (ConnectionError) | Muestra alerta en home, retorna lista vacía en catálogo |
+| Timeout de conexión | Mensaje de error amigable, sin crashear |
+| Producto no encontrado (404) | Redirige a lista con `messages.error()` |
+| Pedido no encontrado (404) | Redirige a lista_pedidos con mensaje |
+| Stock insuficiente (400) | Permanece en checkout con error visible |
+| Producto inactivo (400) | Permanece en checkout con error visible |
+| Carrito vacío en POST | Redirige al catálogo con `messages.warning()` |
+
+**Implementación en `api_service.py`:**
+```python
+# Captura de errores HTTP de FastAPI
+except requests.ConnectionError as e:
+    return None, f"Error de conexión: {str(e)}"
+except requests.Timeout:
+    return None, "Tiempo de espera agotado al conectar con la API"
+# Para errores HTTP (400, 404, etc.):
+detail = response.json().get("detail", response.text)
+return None, f"Error {response.status_code}: {detail}"
+```
+
+**Implementación en `views.py`:**
+```python
+# Patrón consistente de manejo de errores en todas las vistas
+productos, error = api_client.listar_productos(activo=True)
+if productos is None:
+    productos = []
+    messages.error(request, f"No se pudieron cargar los productos: {error}")
+```
+
+**Tests cubiertos (`python manage.py test catalogo`):**
+
+```
+Clase 4 — Templates y Catálogo:
+  ✅ test_home_template_render
+  ✅ test_lista_productos_template_render
+  ✅ test_detalle_producto_template_render
+  ✅ test_crear_pedido_vacio_render
+  ✅ test_lista_pedidos_render
+  ✅ test_detalle_pedido_render
+  ✅ test_badge_agotado_stock_cero
+  ✅ test_estado_vacio_sin_productos
+  ✅ test_busqueda_filtra_por_nombre
+  ✅ test_detalle_producto_sin_stock_muestra_mensaje
+
+Clase 5 — Formularios y Pedidos:
+  ✅ test_agregar_al_carrito_guarda_en_sesion
+  ✅ test_cantidad_invalida_no_agrega
+  ✅ test_checkout_post_crea_pedido_y_redirige
+  ✅ test_checkout_post_carrito_vacio_redirige_a_catalogo
+  ✅ test_eliminar_producto_del_carrito
+  ✅ test_vaciar_carrito_limpia_sesion
+
+Clase 6 — Manejo de Excepciones:
+  ✅ test_home_con_api_caida_muestra_alerta
+  ✅ test_catalogo_con_api_caida_retorna_200
+  ✅ test_producto_no_encontrado_redirige
+  ✅ test_pedido_no_encontrado_redirige
+  ✅ test_stock_insuficiente_muestra_error
+  ✅ test_producto_inactivo_muestra_error
+  ✅ test_flujo_completo_e2e
+```
+
+**Commit de entrega final:**
+```bash
+git add .
+git commit -m "feat(clase6): manejo de excepciones + suite de tests completa"
+git tag -a v1.0.0 -m "Release v1.0.0 - Entrega final TechGear"
+git push origin main --tags
 ```
 
 ---
@@ -256,6 +398,7 @@ git push -u origin main
 - **UI/UX:** Bootstrap 5.3, Bootstrap Icons, CSS personalizado
 - **Documentación:** Swagger UI (OpenAPI) + ReDoc
 - **Control de Versiones:** Git + GitHub
+- **Testing:** Django TestCase + unittest.mock
 
 ---
 
