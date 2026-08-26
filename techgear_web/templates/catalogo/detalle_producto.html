@@ -1,18 +1,20 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{# ================================================================
+{% comment %}
+================================================================
    CLASE 4 — Django Templates y Catálogo
    detalle_producto.html: Vista de producto individual
    Template Tags usados:
-     - {{ producto.nombre }}            variable de contexto
-     - {{ producto.precio|floatformat}} filtro de formato
-     - {% if producto.imagen_url %}     condicional de imagen
-     - {% if producto.stock > 0 %}      condicional de stock
-     - {% url %}                        resolución de URL
-     - {% csrf_token %}                 token de seguridad para POST
-     - {{ producto.id|slice:":8" }}     filtro de corte de string
-================================================================ #}
+     - producto.nombre            variable de contexto
+     - producto.precio|floatformat filtro de formato
+     - if producto.imagen_url     condicional de imagen
+     - if producto.stock > 0      condicional de stock
+     - url                        resolución de URL
+     - csrf_token                 token de seguridad para POST
+     - producto.id|slice:":8"     filtro de corte de string
+================================================================
+{% endcomment %}
 
 {% block title %}{{ producto.nombre }} - TechGear{% endblock %}
 

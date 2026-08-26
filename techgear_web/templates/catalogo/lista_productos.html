@@ -1,19 +1,21 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{# ================================================================
+{% comment %}
+================================================================
    CLASE 4 — Django Templates y Catálogo
    lista_productos.html: Catálogo completo con filtros por categoría
    Template Tags usados:
-     - {% for cat in categorias %}       iteración sobre categorías
-     - {% if categoria_actual == cat %}  comparación en condicional
-     - {{ productos|length }}            filtro de longitud
-     - {{ producto.precio|floatformat }} filtro de decimales
-     - {{ busqueda|urlencode }}          filtro de codificación URL
-     - {{ cat|urlencode }}               codificación de parámetro GET
-     - {% url %}                         resolución de rutas
-     - {% if forloop.first %}            variable especial del for
-================================================================ #}
+     - for cat in categorias        iteración sobre categorías
+     - if categoria_actual == cat   comparación en condicional
+     - productos|length             filtro de longitud
+     - producto.precio|floatformat  filtro de decimales
+     - busqueda|urlencode           filtro de codificación URL
+     - cat|urlencode                codificación de parámetro GET
+     - url                          resolución de rutas
+     - if forloop.first             variable especial del for
+================================================================
+{% endcomment %}
 
 {% block title %}Catálogo de Productos - TechGear{% endblock %}
 

@@ -1,23 +1,25 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{# ================================================================
-   CLASE 4 — Django Templates y Catálogo
-   home.html: Página principal de TechGear
+{% comment %}
+================================================================
+   CLASE 4 - Django Templates y Catalogo
+   home.html: Pagina principal de TechGear
    Template Tags usados:
-     - {% extends %}       herencia de plantillas
-     - {% block %}         bloques sobreescribibles
-     - {% load static %}   cargar archivos estáticos
-     - {% url %}           resolución de URLs por nombre
-     - {% for %}           iteración sobre listas
-     - {% if / elif %}     condicionales
-     - {% with %}          asignación de variables temporales
-     - {{ variable }}      renderizado de variables
-     - |floatformat:2      filtro: formato de decimales
-     - |truncatechars:50   filtro: truncar texto
-     - |length             filtro: longitud de lista
-     - |default            filtro: valor por defecto
-================================================================ #}
+     - extends             herencia de plantillas
+     - block               bloques sobreescribibles
+     - load static         cargar archivos estaticos
+     - url                 resolucion de URLs por nombre
+     - for                 iteracion sobre listas
+     - if / elif           condicionales
+     - with                asignacion de variables temporales
+     - variable            renderizado de variables
+     - floatformat:2       filtro: formato de decimales
+     - truncatechars:50    filtro: truncar texto
+     - length              filtro: longitud de lista
+     - default             filtro: valor por defecto
+================================================================
+{% endcomment %}
 
 {% block title %}TechGear - Hardware y Componentes de Vanguardia{% endblock %}
 
