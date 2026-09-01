@@ -317,3 +317,90 @@ class Clase6ManejoExcepcionesTests(TestCase):
         resp5 = self.client.get(reverse('catalogo:detalle_pedido', args=[self.pedido['id']]))
         self.assertEqual(resp5.status_code, 200)
         self.assertContains(resp5, 'Detalle de la Orden')
+
+
+class CreacionProductosTests(TestCase):
+
+    def setUp(self):
+        self.client = Client()
+        self.nuevo_producto = {
+            'id': '60d21b4667d0d8992e610c99',
+            'nombre': 'Teclado Mecanico RGB Pro',
+            'descripcion': 'Teclado mecanico con switches opticos y retroiluminacion RGB.',
+            'categoria': 'Perifericos',
+            'precio': 89.99,
+            'stock': 15,
+            'marca': 'TechGear',
+            'imagen_url': 'https://images.unsplash.com/photo-1587829741301-dc798b83add3',
+            'activo': True,
+        }
+
+    @patch('catalogo.views.api_client.listar_productos')
+    def test_crear_producto_get_render(self, mock_listar):
+        mock_listar.return_value = ([self.nuevo_producto], None)
+        response = self.client.get(reverse('catalogo:crear_producto'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'catalogo/crear_producto.html')
+        self.assertContains(response, 'Agregar Nuevo Producto')
+        self.assertContains(response, 'Informaci')
+
+    @patch('catalogo.views.api_client.obtener_producto')
+    @patch('catalogo.views.api_client.listar_productos')
+    @patch('catalogo.views.api_client.crear_producto')
+    def test_crear_producto_post_exitoso(self, mock_crear, mock_listar, mock_obtener):
+        mock_listar.return_value = ([], None)
+        mock_crear.return_value = (self.nuevo_producto, None)
+        mock_obtener.return_value = (self.nuevo_producto, None)
+        datos = {
+            'nombre': 'Teclado Mecanico RGB Pro',
+            'descripcion': 'Teclado mecanico con switches opticos y retroiluminacion RGB.',
+            'categoria': 'Perifericos',
+            'precio': '89.99',
+            'stock': '15',
+            'marca': 'TechGear',
+            'imagen_url': 'https://images.unsplash.com/photo-1587829741301-dc798b83add3',
+            'activo': 'on',
+        }
+        response = self.client.post(reverse('catalogo:crear_producto'), datos)
+        self.assertRedirects(response, reverse('catalogo:detalle_producto', args=[self.nuevo_producto['id']]))
+        mock_crear.assert_called_once()
+        args_llamada = mock_crear.call_args[0][0]
+        self.assertEqual(args_llamada['nombre'], 'Teclado Mecanico RGB Pro')
+        self.assertEqual(args_llamada['precio'], 89.99)
+        self.assertEqual(args_llamada['stock'], 15)
+        self.assertTrue(args_llamada['activo'])
+
+    @patch('catalogo.views.api_client.listar_productos')
+    def test_crear_producto_post_validacion_errores(self, mock_listar):
+        mock_listar.return_value = ([], None)
+        datos_invalidos = {
+            'nombre': 'A',  # Demasiado corto (<2)
+            'descripcion': 'abc',  # Demasiado corto (<5)
+            'categoria': '',
+            'precio': '-10',  # Precio negativo
+            'stock': '-5',  # Stock negativo
+        }
+        response = self.client.post(reverse('catalogo:crear_producto'), datos_invalidos)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'catalogo/crear_producto.html')
+        self.assertContains(response, 'al menos 2 caracteres')
+        self.assertContains(response, 'al menos 5 caracteres')
+        self.assertContains(response, 'La categor')
+
+    @patch('catalogo.views.api_client.listar_productos')
+    @patch('catalogo.views.api_client.crear_producto')
+    def test_crear_producto_post_api_error(self, mock_crear, mock_listar):
+        mock_listar.return_value = ([], None)
+        mock_crear.return_value = (None, 'Error 500: Error interno del servidor en FastAPI')
+        datos = {
+            'nombre': 'Mouse Gaming Ultra',
+            'descripcion': 'Mouse ergonomico de 16000 DPI con sensor optico avanzado.',
+            'categoria': 'Perifericos',
+            'precio': '49.99',
+            'stock': '20',
+            'marca': 'TechGear',
+        }
+        response = self.client.post(reverse('catalogo:crear_producto'), datos)
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'catalogo/crear_producto.html')
+        self.assertContains(response, 'Error al crear el producto')

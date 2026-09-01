@@ -38,6 +38,7 @@ Teller2/
 │   │       ├── home.html
 │   │       ├── lista_productos.html
 │   │       ├── detalle_producto.html
+│   │       ├── crear_producto.html
 │   │       ├── crear_pedido.html
 │   │       ├── lista_pedidos.html
 │   │       └── detalle_pedido.html
@@ -169,6 +170,7 @@ python manage.py runserver 8001
 4. Ve a **Finalizar Compra** (ícono carrito en la navbar)
 5. Llena tus datos y confirma el pedido → se envía POST a FastAPI
 6. Consulta tus pedidos en **Mis Pedidos** buscando por tu correo
+7. Agrega nuevos productos en **Nuevo Producto** (`/productos/nuevo/`) con vista previa en tiempo real y validación Pydantic directa a MongoDB Atlas
 
 ---
 
@@ -363,15 +365,35 @@ Clase 6 — Manejo de Excepciones:
   ✅ test_stock_insuficiente_muestra_error
   ✅ test_producto_inactivo_muestra_error
   ✅ test_flujo_completo_e2e
+
+Creación de Productos:
+  ✅ test_crear_producto_get_render
+  ✅ test_crear_producto_post_exitoso
+  ✅ test_crear_producto_post_validacion_errores
+  ✅ test_crear_producto_post_api_error
 ```
 
-**Commit de entrega final:**
-```bash
-git add .
-git commit -m "feat(clase6): manejo de excepciones + suite de tests completa"
-git tag -a v1.0.0 -m "Release v1.0.0 - Entrega final TechGear"
-git push origin main --tags
-```
+---
+
+## ☁️ Despliegue en Render (Render Blueprint)
+
+El proyecto incluye el archivo [`render.yaml`](file:///c:/Users/Acer/Documents/Jonathan%20SENA/Python/3%20trimestre/Teller2/render.yaml) para desplegar automáticamente la arquitectura completa como un **Blueprint**:
+
+1. Ve a tu cuenta de [Render Dashboard](https://dashboard.render.com/).
+2. Haz clic en **New +** → **Blueprint**.
+3. Conecta este repositorio de GitHub (`Taller2-Teach-Gear`).
+4. Render detectará `render.yaml` y creará dos servicios web:
+   - **`techgear-api`**: Servicio FastAPI (`uvicorn techgear_api.main:app`)
+   - **`techgear-web`**: Servicio Django (`gunicorn config.wsgi:application` + WhiteNoise para estáticos)
+5. Configura las variables de entorno en Render:
+   - En **`techgear-api`**:
+     - `MONGODB_URL`: Tu URI de conexión a MongoDB Atlas.
+   - En **`techgear-web`**:
+     - `API_BASE_URL`: La URL pública asignada a `techgear-api` en Render (ej: `https://techgear-api.onrender.com`).
+     - `SECRET_KEY`: Tu clave secreta aleatoria para Django.
+     - `ALLOWED_HOSTS`: `.onrender.com,localhost`
+     - `DEBUG`: `False`
+6. ¡Listo! Ambos servicios se compilarán y desplegarán automáticamente.
 
 ---
 
@@ -394,11 +416,12 @@ git push origin main --tags
 
 - **Backend:** FastAPI, Uvicorn, Motor (async MongoDB), Pydantic v2
 - **Base de Datos:** MongoDB Atlas (cluster en la nube)
-- **Frontend:** Django 4.2 MVT, Requests, Django Sessions
+- **Frontend:** Django 4.2 MVT, Requests, Django Sessions, WhiteNoise
 - **UI/UX:** Bootstrap 5.3, Bootstrap Icons, CSS personalizado
 - **Documentación:** Swagger UI (OpenAPI) + ReDoc
+- **Despliegue:** Render Blueprints (`render.yaml`) + Gunicorn
 - **Control de Versiones:** Git + GitHub
-- **Testing:** Django TestCase + unittest.mock
+- **Testing:** Django TestCase + unittest.mock (27 tests)
 
 ---
 

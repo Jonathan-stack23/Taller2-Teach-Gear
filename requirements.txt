@@ -16,6 +16,7 @@ python-multipart>=0.0.9
 # --- Web (Django) ---
 Django==4.2.30
 gunicorn>=22.0.0
+whitenoise>=6.6.0
 
 # --- Compartidas ---
 python-dotenv>=1.0.1

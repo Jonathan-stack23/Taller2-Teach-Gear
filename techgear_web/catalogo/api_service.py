@@ -167,6 +167,9 @@ class TechGearAPI:
     def obtener_producto(self, producto_id: str):
         return _request_json("GET", f"{self.base_url}/productos/{producto_id}")
 
+    def crear_producto(self, datos_producto: dict):
+        return _request_json("POST", f"{self.base_url}/productos", data=datos_producto)
+
     def crear_pedido(self, datos_pedido: dict):
         return _request_json("POST", f"{self.base_url}/pedidos", data=datos_pedido)
 

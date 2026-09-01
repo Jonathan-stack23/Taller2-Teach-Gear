@@ -25,7 +25,8 @@ body {
 /* ── Hero Section ── */
 .hero {
     position: relative;
-    background: linear-gradient(135deg, #0d6efd 0%, #1e40af 60%, #0369a1 100%);
+    background-color: #0f172a !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e40af 50%, #0369a1 100%) !important;
 }
 
 .hero::before {

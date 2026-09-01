@@ -53,6 +53,101 @@ def lista_productos(request: HttpRequest) -> HttpResponse:
     })
 
 
+def crear_producto(request: HttpRequest) -> HttpResponse:
+    todos_productos, _ = api_client.listar_productos(activo=None)
+    categorias = []
+    if todos_productos:
+        categorias = sorted({p['categoria'] for p in todos_productos if p.get('categoria')})
+    if not categorias:
+        categorias = ["Laptops", "Periféricos", "Monitores", "Componentes", "Audio", "Almacenamiento"]
+
+    if request.method == 'POST':
+        nombre = request.POST.get('nombre', '').strip()
+        descripcion = request.POST.get('descripcion', '').strip()
+        categoria = request.POST.get('categoria', '').strip()
+        precio_raw = request.POST.get('precio', '').strip()
+        stock_raw = request.POST.get('stock', '').strip()
+        marca = request.POST.get('marca', '').strip() or None
+        imagen_url = request.POST.get('imagen_url', '').strip() or None
+        activo = 'activo' in request.POST
+
+        errores = []
+        if not nombre or len(nombre) < 2:
+            errores.append("El nombre del producto debe tener al menos 2 caracteres.")
+        if not descripcion or len(descripcion) < 5:
+            errores.append("La descripción debe tener al menos 5 caracteres.")
+        if not categoria:
+            errores.append("La categoría es obligatoria.")
+
+        try:
+            precio = float(precio_raw)
+            if precio <= 0:
+                errores.append("El precio debe ser un número mayor a 0.")
+        except (ValueError, TypeError):
+            errores.append("El precio ingresado no es válido.")
+            precio = 0.0
+
+        try:
+            stock = int(stock_raw)
+            if stock < 0:
+                errores.append("El stock no puede ser negativo.")
+        except (ValueError, TypeError):
+            errores.append("El stock ingresado no es un número entero válido.")
+            stock = 0
+
+        form_data = {
+            'nombre': nombre,
+            'descripcion': descripcion,
+            'categoria': categoria,
+            'precio': precio_raw,
+            'stock': stock_raw,
+            'marca': marca or '',
+            'imagen_url': imagen_url or '',
+            'activo': activo,
+        }
+
+        if errores:
+            for err in errores:
+                messages.error(request, err)
+            return render(request, 'catalogo/crear_producto.html', {
+                'categorias': categorias,
+                'form_data': form_data,
+            })
+
+        datos_producto = {
+            'nombre': nombre,
+            'descripcion': descripcion,
+            'categoria': categoria,
+            'precio': precio,
+            'stock': stock,
+            'marca': marca,
+            'imagen_url': imagen_url,
+            'activo': activo,
+        }
+
+        resultado, error = api_client.crear_producto(datos_producto)
+        if resultado is None:
+            messages.error(request, f"Error al crear el producto: {error}")
+            return render(request, 'catalogo/crear_producto.html', {
+                'categorias': categorias,
+                'form_data': form_data,
+            })
+
+        nuevo_id = resultado.get('id') or resultado.get('_id')
+        messages.success(request, f"¡Producto \"{nombre}\" agregado exitosamente al catálogo!")
+        if nuevo_id:
+            return redirect('catalogo:detalle_producto', producto_id=nuevo_id)
+        return redirect('catalogo:lista_productos')
+
+    return render(request, 'catalogo/crear_producto.html', {
+        'categorias': categorias,
+        'form_data': {
+            'activo': True,
+            'stock': 10,
+        }
+    })
+
+
 def detalle_producto(request: HttpRequest, producto_id: str) -> HttpResponse:
     producto, error = api_client.obtener_producto(producto_id)
     if producto is None:

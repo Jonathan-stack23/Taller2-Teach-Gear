@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% comment %}
+================================================================
+   CLASE 5/6 — Django Formularios y Creación de Recursos
+   crear_producto.html: Formulario para añadir nuevos productos al inventario
+   Flujo:
+     1. Django muestra el formulario HTML con soporte para autocompletado de categorías
+     2. Vista previa dinámica en tiempo real del producto mediante JavaScript interactivo
+     3. El usuario completa los datos y hace clic en "Guardar Producto"
+     4. Django recibe el POST en crear_producto(), valida datos y envía POST a FastAPI /productos
+     5. FastAPI valida con Pydantic e inserta en MongoDB Atlas
+     6. Django redirige al detalle del producto creado con mensaje de éxito
+================================================================
+{% endcomment %}
+
+{% block title %}Agregar Nuevo Producto - TechGear{% endblock %}
+
+{% block content %}
+
+{# ── BREADCRUMB ─────────────────────────────────────────────────── #}
+<nav aria-label="breadcrumb" class="mb-4">
+    <ol class="breadcrumb bg-white p-3 rounded-4 shadow-sm mb-0">
+        <li class="breadcrumb-item">
+            <a href="{% url 'catalogo:home' %}" class="text-decoration-none text-muted">
+                <i class="bi bi-house me-1"></i>Inicio
+            </a>
+        </li>
+        <li class="breadcrumb-item">
+            <a href="{% url 'catalogo:lista_productos' %}" class="text-decoration-none text-muted">
+                Catálogo
+            </a>
+        </li>
+        <li class="breadcrumb-item active text-dark fw-semibold" aria-current="page">
+            Agregar Producto
+        </li>
+    </ol>
+</nav>
+
+{# ── TÍTULO DE LA PÁGINA ────────────────────────────────────────── #}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="h2 fw-bold text-dark mb-1 d-flex align-items-center gap-2">
+            <span class="brand-icon bg-primary text-white rounded-3 p-2 fs-4 shadow-sm">
+                <i class="bi bi-plus-circle-fill"></i>
+            </span>
+            Agregar Nuevo Producto
+        </h1>
+        <p class="text-muted mb-0">
+            Registra un nuevo producto en el inventario sincronizado en tiempo real con FastAPI y MongoDB Atlas
+        </p>
+    </div>
+    <div>
+        <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary rounded-pill px-3 fw-semibold">
+            <i class="bi bi-arrow-left me-1"></i>Volver al Catálogo
+        </a>
+    </div>
+</div>
+
+<div class="row g-4">
+    {# ── FORMULARIO PRINCIPAL ────────────────────────────────────── #}
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-2">
+                <h5 class="card-title fw-bold text-dark mb-1">
+                    <i class="bi bi-box-seam text-primary me-2"></i>Información del Producto
+                </h5>
+                <p class="text-muted small mb-0">Completa todos los campos obligatorios marcados con (*)</p>
+            </div>
+
+            <div class="card-body p-4 pt-2">
+                <form method="post" action="{% url 'catalogo:crear_producto' %}" id="form-crear-producto" novalidate>
+                    {% csrf_token %}
+
+                    {# Nombre del Producto #}
+                    <div class="mb-3">
+                        <label for="nombre" class="form-label fw-semibold text-dark">
+                            Nombre del Producto <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted">
+                                <i class="bi bi-tag"></i>
+                            </span>
+                            <input type="text"
+                                   class="form-control border-start-0 bg-light"
+                                   id="nombre"
+                                   name="nombre"
+                                   required
+                                   minlength="2"
+                                   maxlength="100"
+                                   placeholder="Ej: Teclado Mecánico RGB Pro"
+                                   value="{{ form_data.nombre|default:'' }}">
+                        </div>
+                        <div class="form-text small">Mínimo 2 caracteres, máximo 100.</div>
+                    </div>
+
+                    {# Categoría y Marca en 2 columnas #}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="categoria" class="form-label fw-semibold text-dark">
+                                Categoría <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">
+                                    <i class="bi bi-grid-3x3-gap"></i>
+                                </span>
+                                <input type="text"
+                                       class="form-control border-start-0 bg-light"
+                                       id="categoria"
+                                       name="categoria"
+                                       list="categorias-list"
+                                       required
+                                       placeholder="Selecciona o escribe..."
+                                       value="{{ form_data.categoria|default:'' }}">
+                                <datalist id="categorias-list">
+                                    {% for cat in categorias %}
+                                        <option value="{{ cat }}">
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            <div class="form-text small">Ej: Laptops, Periféricos, Componentes, Monitores.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="marca" class="form-label fw-semibold text-dark">
+                                Marca / Fabricante
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">
+                                    <i class="bi bi-award"></i>
+                                </span>
+                                <input type="text"
+                                       class="form-control border-start-0 bg-light"
+                                       id="marca"
+                                       name="marca"
+                                       maxlength="50"
+                                       placeholder="Ej: ASUS, Logitech, Corsair..."
+                                       value="{{ form_data.marca|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Precio y Stock en 2 columnas #}
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label for="precio" class="form-label fw-semibold text-dark">
+                                Precio (USD $) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-primary fw-bold">$</span>
+                                <input type="number"
+                                       step="0.01"
+                                       min="0.01"
+                                       class="form-control border-start-0 bg-light"
+                                       id="precio"
+                                       name="precio"
+                                       required
+                                       placeholder="0.00"
+                                       value="{{ form_data.precio|default:'' }}">
+                            </div>
+                            <div class="form-text small">Debe ser mayor a $0.00.</div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="stock" class="form-label fw-semibold text-dark">
+                                Stock Inicial <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0 text-muted">
+                                    <i class="bi bi-stack"></i>
+                                </span>
+                                <input type="number"
+                                       min="0"
+                                       step="1"
+                                       class="form-control border-start-0 bg-light"
+                                       id="stock"
+                                       name="stock"
+                                       required
+                                       placeholder="10"
+                                       value="{{ form_data.stock|default:'10' }}">
+                            </div>
+                            <div class="form-text small">Unidades disponibles en inventario (>= 0).</div>
+                        </div>
+                    </div>
+
+                    {# URL de la Imagen #}
+                    <div class="mb-3">
+                        <label for="imagen_url" class="form-label fw-semibold text-dark">
+                            URL de la Imagen
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0 text-muted">
+                                <i class="bi bi-image"></i>
+                            </span>
+                            <input type="url"
+                                   class="form-control border-start-0 bg-light"
+                                   id="imagen_url"
+                                   name="imagen_url"
+                                   placeholder="https://images.unsplash.com/..."
+                                   value="{{ form_data.imagen_url|default:'' }}">
+                        </div>
+                        <div class="form-text small">URL directa a una imagen JPG, PNG o WebP en la web.</div>
+                    </div>
+
+                    {# Descripción #}
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label fw-semibold text-dark">
+                            Descripción Detallada <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control bg-light"
+                                  id="descripcion"
+                                  name="descripcion"
+                                  rows="4"
+                                  required
+                                  minlength="5"
+                                  placeholder="Describe las especificaciones técnicas, características clave y garantía del producto...">{{ form_data.descripcion|default:'' }}</textarea>
+                        <div class="form-text small">Mínimo 5 caracteres.</div>
+                    </div>
+
+                    {# Checkbox Activo / Disponible #}
+                    <div class="form-check form-switch mb-4 p-3 bg-light rounded-3 border">
+                        <input class="form-check-input ms-0 me-3"
+                               type="checkbox"
+                               role="switch"
+                               id="activo"
+                               name="activo"
+                               {% if form_data.activo|default:True %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold text-dark" for="activo">
+                            Producto Activo y Publicado
+                        </label>
+                        <div class="text-muted small ms-5">
+                            Si está activo, aparecerá inmediatamente en el catálogo para los clientes.
+                        </div>
+                    </div>
+
+                    {# Botones de Acción #}
+                    <div class="d-flex gap-2 pt-2">
+                        <button type="submit" class="btn btn-primary px-4 py-2 fw-semibold rounded-pill shadow-sm flex-grow-1">
+                            <i class="bi bi-cloud-arrow-up-fill me-2"></i>Guardar Producto en Catálogo
+                        </button>
+                        <a href="{% url 'catalogo:lista_productos' %}" class="btn btn-outline-secondary px-4 py-2 fw-semibold rounded-pill">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {# ── VISTA PREVIA EN TIEMPO REAL & GUÍA ───────────────────────── #}
+    <div class="col-lg-5">
+        {# Card de Vista Previa #}
+        <div class="card border-0 shadow-sm rounded-4 bg-white overflow-hidden mb-4 sticky-top" style="top: 90px; z-index: 10;">
+            <div class="card-header bg-dark text-white py-3 px-4 d-flex justify-content-between align-items-center">
+                <span class="fw-semibold small">
+                    <i class="bi bi-eye-fill text-info me-2"></i>Vista Previa en Vivo
+                </span>
+                <span class="badge bg-primary rounded-pill small">Tarjeta de Catálogo</span>
+            </div>
+
+            <div class="card-body p-4">
+                {# Preview de Card de Producto #}
+                <div class="card shadow-sm border-0 rounded-4 overflow-hidden product-card mx-auto" style="max-width: 320px;">
+                    <div class="product-image-container bg-light p-4 text-center d-flex align-items-center justify-content-center position-relative" style="height: 190px;">
+                        <img id="preview-img"
+                             src="{{ form_data.imagen_url|default:'' }}"
+                             alt="Preview"
+                             class="img-fluid product-img {% if not form_data.imagen_url %}d-none{% endif %}"
+                             style="max-height: 140px; object-fit: contain;">
+                        <i id="preview-placeholder-icon"
+                           class="bi bi-cpu text-primary display-3 opacity-50 {% if form_data.imagen_url %}d-none{% endif %}"></i>
+
+                        <span id="preview-marca-badge"
+                              class="position-absolute top-0 start-0 m-2 badge bg-dark bg-opacity-75 text-white fw-normal small {% if not form_data.marca %}d-none{% endif %}">
+                            {{ form_data.marca|default:'Marca' }}
+                        </span>
+
+                        <span id="preview-stock-badge-zero"
+                              class="position-absolute top-0 end-0 m-2 badge bg-danger small d-none">
+                            Agotado
+                        </span>
+                    </div>
+
+                    <div class="card-body d-flex flex-column p-3">
+                        <div class="mb-2">
+                            <span id="preview-categoria" class="badge bg-primary bg-opacity-10 text-primary fw-semibold px-2 py-1 small rounded-pill">
+                                {{ form_data.categoria|default:'Categoría' }}
+                            </span>
+                        </div>
+
+                        <h6 id="preview-nombre" class="fw-bold text-dark mb-1 text-truncate">
+                            {{ form_data.nombre|default:'Nombre del producto...' }}
+                        </h6>
+
+                        <p id="preview-descripcion" class="text-muted small mb-2 clamp-2" style="font-size: 0.82rem; min-height: 2.4em;">
+                            {{ form_data.descripcion|default:'Aquí aparecerá la descripción detallada del producto...' }}
+                        </p>
+
+                        <div class="d-flex justify-content-between align-items-center mt-auto pt-2 border-top">
+                            <div>
+                                <span class="text-muted small d-block" style="font-size: 0.72rem;">Precio</span>
+                                <span id="preview-precio" class="h5 fw-bold text-primary mb-0">
+                                    ${{ form_data.precio|default:'0.00' }}
+                                </span>
+                            </div>
+                            <div class="text-end">
+                                <span id="preview-stock-badge" class="badge bg-success bg-opacity-10 text-success small rounded-pill px-2 py-1">
+                                    <i class="bi bi-check-circle me-1"></i><span id="preview-stock-val">{{ form_data.stock|default:'10' }}</span> disp.
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# Panel de información técnica #}
+            <div class="card-footer bg-light border-0 p-3 small text-muted">
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <i class="bi bi-shield-check text-success"></i>
+                    <strong class="text-dark">Sincronización Dual:</strong>
+                </div>
+                <span>Al enviar, FastAPI procesa y valida mediante Pydantic (esquema <code>ProductoCreate</code>) y persiste en la colección <code>productos</code> de MongoDB Atlas.</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── SCRIPT DE VISTA PREVIA INTERACTIVA ─────────────────────────── #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const inputNombre = document.getElementById('nombre');
+    const inputCategoria = document.getElementById('categoria');
+    const inputMarca = document.getElementById('marca');
+    const inputPrecio = document.getElementById('precio');
+    const inputStock = document.getElementById('stock');
+    const inputImagenUrl = document.getElementById('imagen_url');
+    const inputDescripcion = document.getElementById('descripcion');
+
+    const previewNombre = document.getElementById('preview-nombre');
+    const previewCategoria = document.getElementById('preview-categoria');
+    const previewMarca = document.getElementById('preview-marca-badge');
+    const previewPrecio = document.getElementById('preview-precio');
+    const previewStockVal = document.getElementById('preview-stock-val');
+    const previewStockBadge = document.getElementById('preview-stock-badge');
+    const previewStockZero = document.getElementById('preview-stock-badge-zero');
+    const previewDescripcion = document.getElementById('preview-descripcion');
+    const previewImg = document.getElementById('preview-img');
+    const previewIcon = document.getElementById('preview-placeholder-icon');
+
+    function updatePreview() {
+        // Nombre
+        previewNombre.textContent = inputNombre.value.trim() || 'Nombre del producto...';
+
+        // Categoría
+        previewCategoria.textContent = inputCategoria.value.trim() || 'Categoría';
+
+        // Marca
+        if (inputMarca.value.trim()) {
+            previewMarca.textContent = inputMarca.value.trim();
+            previewMarca.classList.remove('d-none');
+        } else {
+            previewMarca.classList.add('d-none');
+        }
+
+        // Descripción
+        previewDescripcion.textContent = inputDescripcion.value.trim() || 'Aquí aparecerá la descripción detallada del producto...';
+
+        // Precio
+        const valPrecio = parseFloat(inputPrecio.value);
+        if (!isNaN(valPrecio) && valPrecio > 0) {
+            previewPrecio.textContent = '$' + valPrecio.toFixed(2);
+        } else {
+            previewPrecio.textContent = '$0.00';
+        }
+
+        // Stock
+        const valStock = parseInt(inputStock.value, 10);
+        if (!isNaN(valStock)) {
+            previewStockVal.textContent = valStock;
+            if (valStock === 0) {
+                previewStockZero.classList.remove('d-none');
+                previewStockBadge.className = 'badge bg-danger bg-opacity-10 text-danger small rounded-pill px-2 py-1';
+                previewStockBadge.innerHTML = '<i class="bi bi-x-circle me-1"></i>0 disp.';
+            } else {
+                previewStockZero.classList.add('d-none');
+                previewStockBadge.className = 'badge bg-success bg-opacity-10 text-success small rounded-pill px-2 py-1';
+                previewStockBadge.innerHTML = '<i class="bi bi-check-circle me-1"></i>' + valStock + ' disp.';
+            }
+        }
+
+        // Imagen
+        const url = inputImagenUrl.value.trim();
+        if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
+            previewImg.src = url;
+            previewImg.classList.remove('d-none');
+            previewIcon.classList.add('d-none');
+            previewImg.onerror = function() {
+                previewImg.classList.add('d-none');
+                previewIcon.classList.remove('d-none');
+            };
+        } else {
+            previewImg.classList.add('d-none');
+            previewIcon.classList.remove('d-none');
+        }
+    }
+
+    [inputNombre, inputCategoria, inputMarca, inputPrecio, inputStock, inputImagenUrl, inputDescripcion].forEach(el => {
+        if (el) {
+            el.addEventListener('input', updatePreview);
+            el.addEventListener('change', updatePreview);
+        }
+    });
+
+    updatePreview();
+});
+</script>
+
+{% endblock %}

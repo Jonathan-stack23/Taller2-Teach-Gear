@@ -19,7 +19,7 @@ services:
   - type: web
     name: techgear-web
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python techgear_web/manage.py collectstatic --noinput && python techgear_web/manage.py migrate --noinput
     startCommand: cd techgear_web && gunicorn config.wsgi:application --bind 0.0.0.0:$PORT
     envVars:
       - key: API_BASE_URL

@@ -31,7 +31,10 @@
             Explora nuestra amplia selección de hardware y componentes de alto rendimiento
         </p>
     </div>
-    <div class="col-md-5 text-md-end">
+    <div class="col-md-5 text-md-end d-flex align-items-center justify-content-md-end gap-2 flex-wrap">
+        <a href="{% url 'catalogo:crear_producto' %}" class="btn btn-primary rounded-pill px-3 py-2 fw-semibold shadow-sm">
+            <i class="bi bi-plus-lg me-1"></i>Agregar Producto
+        </a>
         {# Filtro {{ |length }} para contar cuántos productos se devolvieron #}
         {% if productos %}
             <span class="badge bg-primary bg-opacity-10 text-primary fs-6 px-3 py-2 rounded-pill badge-pulse">
